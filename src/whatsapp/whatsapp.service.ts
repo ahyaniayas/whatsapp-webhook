@@ -83,7 +83,7 @@ export class WhatsappService {
             pricing: status.pricing,
             errors: status.errors,
 
-            raw: status,
+            raw: JSON.stringify(status),
         });
     }
 }
