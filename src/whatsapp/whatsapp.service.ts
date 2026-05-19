@@ -73,20 +73,17 @@ export class WhatsappService {
     }
 
     private async handleMessageStatus(status: any) {
-        console.log(
-            'MESSAGE STATUS::',
-            JSON.stringify({
-                messageId: status.id,
-                recipient: status.recipient_id,
-                status: status.status,
-                timestamp: status.timestamp,
+        console.log({
+            messageId: status.id,
+            recipient: status.recipient_id,
+            status: status.status,
+            timestamp: status.timestamp,
 
-                conversation: status.conversation,
-                pricing: status.pricing,
-                errors: status.errors,
+            conversation: status.conversation,
+            pricing: status.pricing,
+            errors: status.errors,
 
-                raw: status,
-            }),
-        );
+            raw: status,
+        });
     }
 }
