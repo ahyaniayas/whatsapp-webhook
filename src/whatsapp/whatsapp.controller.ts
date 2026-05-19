@@ -30,9 +30,9 @@ export class WhatsappController {
         @Query('hub.challenge') challenge: string,
         @Res() res: Response,
     ) {
-        const verifyToken = this.configService.get<string>(
-            'WHATSAPP_VERIFY_TOKEN',
-        );
+        // const verifyToken = this.configService.get<string>(
+        //     'WHATSAPP_VERIFY_TOKEN',
+        // );
 
         console.log("GET::HASIL:", mode, token, challenge);
         // if (mode === 'subscribe' && token === verifyToken) {
