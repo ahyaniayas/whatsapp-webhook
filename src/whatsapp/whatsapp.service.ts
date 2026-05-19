@@ -1,7 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Kysely } from 'kysely';
 
 @Injectable()
 export class WhatsappService {
+    @Inject("KYSELY_CONNECTION") private readonly db: Kysely<any>;
     private readonly logger = new Logger(WhatsappService.name);
 
     async handleWebhook(body: any) {
