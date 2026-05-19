@@ -78,7 +78,6 @@ export class WhatsappService {
             recipient: status.recipient_id,
             status: status.status,
             timestamp: status.timestamp,
-
             conversation: status.conversation,
             pricing: status.pricing,
             errors: status.errors,
