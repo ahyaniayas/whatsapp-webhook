@@ -55,6 +55,26 @@ export class WhatsappController {
         // this.validateSignature(signature, body);
 
         console.log("POST::HASIL:", signature, body);
+        // ambil statuses
+        const statuses =
+            body?.entry?.[0]?.changes?.[0]?.value?.statuses;
+
+        if (statuses?.length) {
+            for (const status of statuses) {
+                console.log(
+                    'STATUS DETAIL::',
+                    JSON.stringify(status, null, 2),
+                );
+
+                // tampilkan error jika ada
+                if (status?.errors?.length) {
+                    console.log(
+                        'ERROR DETAIL::',
+                        JSON.stringify(status.errors, null, 2),
+                    );
+                }
+            }
+        }
         await this.whatsappService.handleWebhook(body);
 
         return {
