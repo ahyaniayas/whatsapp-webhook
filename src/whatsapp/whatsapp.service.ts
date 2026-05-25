@@ -7,6 +7,8 @@ export class WhatsappService {
     private readonly db: Kysely<any>;
     private readonly logger = new Logger(WhatsappService.name);
 
+    private tableLog: string = 'logger.l01_wa_webhook_log';
+
     async handleWebhook(body: any) {
         try {
             const entry = body?.entry?.[0];
@@ -67,12 +69,16 @@ export class WhatsappService {
 
             message_text: message?.text?.body,
 
-            document_id: message?.document?.id,
-            document_filename: message?.document?.filename,
-            document_mime_type: message?.document?.mime_type,
+            media_id:
+                message?.document?.id ||
+                message?.image?.id,
 
-            image_id: message?.image?.id,
-            image_mime_type: message?.image?.mime_type,
+            media_filename:
+                message?.document?.filename,
+
+            media_mime_type:
+                message?.document?.mime_type ||
+                message?.image?.mime_type,
 
             wa_timestamp: Number(message?.timestamp),
 
@@ -102,8 +108,6 @@ export class WhatsappService {
 
             message_status: status.status,
 
-            conversation_id: status?.conversation?.id,
-
             pricing_model: status?.pricing?.pricing_model,
             pricing_category: status?.pricing?.category,
             pricing_billable: status?.pricing?.billable,
@@ -121,7 +125,7 @@ export class WhatsappService {
     private async insertWebhookLog(data: any) {
         try {
             await this.db
-                .insertInto('logger.l01_wa_webhook_log')
+                .insertInto(this.tableLog)
                 .values({
                     ...data,
                 })
