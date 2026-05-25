@@ -27,7 +27,6 @@ export class LoggerController {
             <style>
                 * { box-sizing: border-box; margin: 0; padding: 0; }
                 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 2rem; background: #f8fafc; color: #1e293b; }
-                .container { max-width: 1400px; margin: 0 auto; }
                 h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 1.5rem; color: #0f172a; display: flex; align-items: center; gap: 0.5rem; }
                 h1::before { content: ""; display: inline-block; width: 8px; height: 28px; background: #6366f1; border-radius: 4px; }
                 
@@ -124,8 +123,9 @@ export class LoggerController {
                                 <th>To</th>
                                 <th>Message ID</th>
                                 <th>Type</th>
-                                <th>Status History</th>
+                                <th>Billable</th>
                                 <th>Latest Error</th>
+                                <th>Status History</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -141,8 +141,28 @@ export class LoggerController {
                                       `).join('')
                 : '<span class="text-muted">-</span>';
 
-            const latestError = row.statuses && row.statuses[0]?.error_title
-                ? row.statuses[0].error_title
+            const uniqueTypes = row.statuses && Array.isArray(row.statuses)
+                ? [...new Set(row.statuses.map((st) => st.message_type ? st.message_type : '-'))]
+                : [];
+
+            const typeDisplay = uniqueTypes.length > 0
+                ? uniqueTypes.map(type => `<span class="text-muted">${type}</span>`).join(', ')
+                : '<span class="text-muted">-</span>';
+
+            const uniqueBillings = row.statuses && Array.isArray(row.statuses)
+                ? [...new Set(row.statuses.map((st) => st.pricing_billable ? st.pricing_billable : '-'))]
+                : [];
+
+            const billingDisplay = uniqueBillings.length > 0
+                ? uniqueBillings.map(bill => `<span class="text-muted">${bill}</span>`).join(', ')
+                : '<span class="text-muted">-</span>';
+
+            const uniqueErrors = row.statuses && Array.isArray(row.statuses)
+                ? [...new Set(row.statuses.map((st) => st.error_title ? st.error_title : '-'))]
+                : [];
+
+            const errorDisplay = uniqueErrors.length > 0
+                ? uniqueErrors.map(er => `<span class="text-muted">${er}</span>`).join(', ')
                 : '<span class="text-muted">-</span>';
 
             return `
@@ -153,7 +173,17 @@ export class LoggerController {
                                     <td><a href="/logger/${row.wa_message_id}">${row.wa_message_id}</a></td>
                                     <td>
                                         <span class="text-muted">
-                                            ${row.statuses && row.statuses[0]?.message_type || '-'}
+                                            ${typeDisplay}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">
+                                            ${billingDisplay}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">
+                                            ${errorDisplay}
                                         </span>
                                     </td>
                                     <td>
@@ -161,7 +191,6 @@ export class LoggerController {
                                             ${statusBadges}
                                         </div>
                                     </td>
-                                    <td style="color: #b91c1c; font-weight: 500;">${latestError}</td>
                                 </tr>
                                 `;
         }).join('')}
@@ -186,12 +215,11 @@ export class LoggerController {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>WhatsApp Message Detail</title>
+            <title>WhatsApp Message Logger</title>
             <style>
                 * { box-sizing: border-box; margin: 0; padding: 0; }
                 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 2rem; background: #f8fafc; color: #1e293b; }
-                .container { max-width: 1000px; margin: 0 auto; }
-                
+
                 .header-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
                 h1 { font-size: 1.75rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 0.5rem; }
                 h1::before { content: ""; display: inline-block; width: 8px; height: 28px; background: #6366f1; border-radius: 4px; }
@@ -224,7 +252,7 @@ export class LoggerController {
         <body>
             <div class="container">
                 <div class="header-wrapper">
-                    <h1>WhatsApp Message Detail</h1>
+                    <h1>WhatsApp Message Logger - Detail</h1>
                     <a href="/logger" class="btn-back">&larr; Back to Dashboard</a>
                 </div>
 

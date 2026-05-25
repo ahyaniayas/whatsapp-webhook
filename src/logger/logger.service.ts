@@ -46,6 +46,7 @@ export class LoggerService {
                             'message_type', log.message_type,
                             'status', log.message_status,
                             'error_title', log.error_title,
+                            'pricing_billable', log.pricing_billable,
                             'created_at', log.created_at
                         ) order by log.id desc
                     )
