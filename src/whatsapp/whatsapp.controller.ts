@@ -16,6 +16,7 @@ import { WhatsappService } from './whatsapp.service';
 
 @Controller('webhook/whatsapp')
 export class WhatsappController {
+    private readonly verifyToken = process.env.WEBHOOK_API_KEY;
     private readonly logger = new Logger(WhatsappController.name);
 
     constructor(
@@ -30,15 +31,11 @@ export class WhatsappController {
         @Query('hub.challenge') challenge: string,
         @Res() res: Response,
     ) {
-        // const verifyToken = this.configService.get<string>(
-        //     'WHATSAPP_VERIFY_TOKEN',
-        // );
-
         console.log("START:GET::HASIL:");
         console.log(mode, token, challenge);
         console.log("END:GET::HASIL");
-        // if (mode === 'subscribe' && token === verifyToken) {
-        if (mode === 'subscribe') {
+
+        if (mode === 'subscribe' && token === this.verifyToken) {
             this.logger.log('Webhook verified');
 
             return res.status(200).send(challenge);
@@ -53,9 +50,6 @@ export class WhatsappController {
         @Body() body: any,
         @Headers('x-hub-signature-256') signature: string,
     ) {
-        // optional signature validation
-        // this.validateSignature(signature, body);
-
         console.log("START:POST::HASIL:");
         console.log(signature, JSON.stringify(body));
         console.log("END:POST::HASIL");
@@ -65,37 +59,5 @@ export class WhatsappController {
         return {
             success: true,
         };
-    }
-
-    private validateSignature(signature: string, body: any) {
-        try {
-            const appSecret =
-                this.configService.get<string>('WHATSAPP_APP_SECRET');
-
-            if (!appSecret || !signature) {
-                return true;
-            }
-
-            const expectedSignature =
-                'sha256=' +
-                createHmac('sha256', appSecret)
-                    .update(JSON.stringify(body))
-                    .digest('hex');
-
-            const isValid = timingSafeEqual(
-                Buffer.from(signature),
-                Buffer.from(expectedSignature),
-            );
-
-            if (!isValid) {
-                this.logger.warn('Invalid webhook signature');
-            }
-
-            return isValid;
-        } catch (err) {
-            this.logger.error(err);
-
-            return false;
-        }
     }
 }

@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Kysely } from 'kysely';
+import { LoggerService } from 'src/logger/logger.service';
 
 @Injectable()
 export class WhatsappService {
@@ -8,6 +9,10 @@ export class WhatsappService {
     private readonly logger = new Logger(WhatsappService.name);
 
     private tableLog: string = 'logger.l01_wa_webhook_log';
+
+    constructor(
+        private readonly loggerService: LoggerService,
+    ) { }
 
     async handleWebhook(body: any) {
         try {
@@ -56,7 +61,7 @@ export class WhatsappService {
 
         this.logger.log(`Incoming message from ${from}`);
 
-        await this.insertWebhookLog({
+        await this.loggerService.insertWebhookLog({
             webhook_object: rawBody?.object,
             webhook_field: changes?.field,
 
@@ -98,7 +103,7 @@ export class WhatsappService {
 
         const error = status?.errors?.[0];
 
-        await this.insertWebhookLog({
+        await this.loggerService.insertWebhookLog({
             webhook_object: rawBody?.object,
             webhook_field: changes?.field,
 
@@ -120,18 +125,5 @@ export class WhatsappService {
 
             raw_json: JSON.stringify(status),
         });
-    }
-
-    private async insertWebhookLog(data: any) {
-        try {
-            await this.db
-                .insertInto(this.tableLog)
-                .values({
-                    ...data,
-                })
-                .execute();
-        } catch (err) {
-            this.logger.error(err);
-        }
     }
 }

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { WhatsappModule } from './whatsapp/whatsapp.module';
 import { ConfigKyselyModule } from './config/modules/config.kysely.module';
+import { WaApiModule } from './api/v1/wa-api/wa-api.module';
 
 @Module({
   imports: [
@@ -10,6 +11,7 @@ import { ConfigKyselyModule } from './config/modules/config.kysely.module';
     }),
     ConfigKyselyModule,
     WhatsappModule,
+    WaApiModule,
   ],
 })
 export class AppModule { }
