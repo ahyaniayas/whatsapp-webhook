@@ -34,7 +34,8 @@ export class WhatsappController {
         //     'WHATSAPP_VERIFY_TOKEN',
         // );
 
-        console.log("START:GET::HASIL:", mode, token, challenge);
+        console.log("START:GET::HASIL:");
+        console.log(mode, token, challenge);
         console.log("END:GET::HASIL");
         // if (mode === 'subscribe' && token === verifyToken) {
         if (mode === 'subscribe') {
@@ -55,27 +56,8 @@ export class WhatsappController {
         // optional signature validation
         // this.validateSignature(signature, body);
 
-        console.log("START:POST::HASIL:", signature, body);
-        // ambil statuses
-        const statuses =
-            body?.entry?.[0]?.changes?.[0]?.value?.statuses;
-
-        if (statuses?.length) {
-            for (const status of statuses) {
-                console.log(
-                    'STATUS DETAIL::',
-                    JSON.stringify(status),
-                );
-
-                // tampilkan error jika ada
-                if (status?.errors?.length) {
-                    console.log(
-                        'ERROR DETAIL::',
-                        JSON.stringify(status.errors),
-                    );
-                }
-            }
-        }
+        console.log("START:POST::HASIL:");
+        console.log(signature, JSON.stringify(body));
         console.log("END:POST::HASIL");
 
         await this.whatsappService.handleWebhook(body);
