@@ -69,7 +69,7 @@ export class WaApiService {
                 media_id: mediaId,
                 media_filename: data.file.originalname,
                 media_mime_type: data.file.mimetype,
-                message_text: `Slip Gaji ${data.periode} `,
+                message_text: `Slip Gaji ${data.periode}`,
                 raw_json: JSON.stringify(response.data),
             });
 
@@ -90,10 +90,9 @@ export class WaApiService {
                 message_type: 'template',
                 message_status: 'failed',
                 media_id: mediaId,
-                media_filename: data.file
-                    .originalname,
+                media_filename: data.file.originalname,
                 media_mime_type: data.file.mimetype,
-                message_text: `Slip Gaji ${data.periode} `,
+                message_text: `Slip Gaji ${data.periode}`,
                 error_code: err?.response?.data?.error?.code,
                 error_message: err?.response?.data?.error?.message || err?.message,
                 raw_json: JSON.stringify(err?.response?.data || err),
