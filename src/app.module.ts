@@ -6,12 +6,14 @@ import { WaApiModule } from './api/v1/wa-api/wa-api.module';
 import { LoggerModule } from './logger/logger.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     ConfigKyselyModule,
     WhatsappModule,
     WaApiModule,
