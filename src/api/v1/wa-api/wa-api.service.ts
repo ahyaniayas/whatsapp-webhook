@@ -12,6 +12,7 @@ import { firstValueFrom } from 'rxjs';
 import FormData from 'form-data';
 import { LoggerService } from 'src/logger/logger.service';
 import { Kysely } from 'kysely';
+import { v7 } from 'uuid';
 
 @Injectable()
 export class WaApiService {
@@ -181,7 +182,7 @@ export class WaApiService {
             await this.loggerService.insertWebhookLog({
                 webhook_object: 'whatsapp_business_account',
                 webhook_field: 'messages',
-                wa_message_id: waMessageId,
+                wa_message_id: waMessageId || v7(),
                 to_number: data.phone,
                 message_type: 'template',
                 message_status: 'requested',
