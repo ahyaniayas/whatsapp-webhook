@@ -16,6 +16,7 @@ export class WhatsappService {
 
     async handleWebhook(body: any) {
         try {
+            this.logger.log("body", JSON.stringify(body));
             const entry = body?.entry?.[0];
             const changes = entry?.changes?.[0];
 
