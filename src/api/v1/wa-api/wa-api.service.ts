@@ -12,7 +12,6 @@ import { firstValueFrom } from 'rxjs';
 import FormData from 'form-data';
 import { LoggerService } from 'src/logger/logger.service';
 import { Kysely } from 'kysely';
-import { v7 } from 'uuid';
 
 @Injectable()
 export class WaApiService {
@@ -176,7 +175,7 @@ export class WaApiService {
                 periode: data.periode,
             });
 
-            const waMessageId = response?.data?.messages?.[0]?.id  || v7();
+            const waMessageId = response?.data?.messages?.[0]?.id;
 
             // 3. Success log ke audit table system Anda
             await this.loggerService.insertWebhookLog({
