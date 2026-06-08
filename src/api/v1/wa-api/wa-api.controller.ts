@@ -1,10 +1,13 @@
 import {
     Body,
     Controller,
+    FileTypeValidator,
     Get,
     Headers,
+    ParseFilePipe,
     Post,
     Query,
+    Req,
     Res,
     UnauthorizedException,
     UploadedFile,
@@ -13,7 +16,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { WaApiService } from './wa-api.service';
 import { memoryStorage } from 'multer';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 
 @Controller('api/v1/wa-api')
 export class WaApiController {
@@ -27,15 +30,24 @@ export class WaApiController {
     @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
     async sendSlipGaji(
         @Headers('api-key') hApiKey: string,
-        @UploadedFile() file: Express.Multer.File,
+        @Headers('app-key') hAppKey: string,
+        @UploadedFile(new ParseFilePipe({
+            fileIsRequired: true,
+            validators: [new FileTypeValidator({ fileType: 'application/pdf' })],
+        })) file: Express.Multer.File,
         @Body('phone') phone: string,
         @Body('nik') nik: string,
         @Body('nama') nama: string,
         @Body('periode') periode: string,
+        @Req() req: Request,
     ) {
         if (hApiKey !== this.apiKey) {
             throw new UnauthorizedException('Invalid API Key');
         }
+
+        // validasi app access
+        const clientIp = this.waApiService.getCleanIp(req.ip);
+        const mode = await this.waApiService.validateAppAccess(hAppKey, clientIp);
 
         // Langsung masukkan ke database tabel antrean
         await this.waApiService.createQueue({
@@ -44,6 +56,7 @@ export class WaApiController {
             nama,
             periode,
             file,
+            dev_mode: mode === 'DEV' ? 1 : 0,
         })
 
         return {

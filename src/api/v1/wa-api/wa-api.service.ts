@@ -4,6 +4,7 @@ import {
     Inject,
     Injectable,
     Logger,
+    UnauthorizedException,
 } from '@nestjs/common';
 
 import { HttpService } from '@nestjs/axios';
@@ -26,12 +27,100 @@ export class WaApiService {
 
     @Inject('KYSELY_CONNECTION')
     private readonly db: Kysely<any>;
+    private readonly tableAppKey = 'sec.s01_app_key';
     private readonly tableQue = 'que.q01_slip_gaji';
+    private readonly tableLog = 'logger.l01_wa_webhook_log';
 
     constructor(
         private readonly httpService: HttpService,
         private readonly loggerService: LoggerService,
     ) { }
+
+    async validateAppAccess(appKey: string, clientIp: string) {
+        // 1. Validasi Key dan Status Aktif
+        const appKeyData = await this.db
+            .selectFrom(this.tableAppKey)
+            .selectAll()
+            .where('key', '=', appKey)
+            .where('is_active', '=', 'Y')
+            .where('deleted_at', 'is', null)
+            .executeTakeFirst();
+
+        if (!appKeyData) {
+            throw new UnauthorizedException('Invalid or inactive APP Key');
+        }
+
+        // 2. Validasi Whitelist IP Address (jika kolom ips di-set)
+        if (appKeyData.ips) {
+            const allowedIps = appKeyData.ips.split(';').map((ip: string) => ip.trim());
+            const isIpWhitelisted = allowedIps.includes(clientIp.trim());
+
+            if (!isIpWhitelisted) {
+                throw new UnauthorizedException(`IP Address ${clientIp} is not whitelisted`);
+            }
+        }
+
+        return appKeyData.mode;
+    }
+
+    async validateDevMode(devMode: number, targetPhone: string) {
+        // 1. Validasi Khusus Mode DEV: Harus ada interaksi pesan masuk dalam 24 jam terakhir
+        if (devMode) {
+            // 1. Hitung batas waktu 24 jam ke belakang
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+            // 2. Ambil semua log pesan masuk dari nomor tujuan dalam 24 jam terakhir
+            const recentLogs = await this.db
+                .selectFrom(this.tableLog)
+                .select(['raw_json', 'created_at'])
+                .where('from_number', '=', targetPhone)
+                .where('created_at', '>=', twentyFourHoursAgo) // Filter langsung via indeks waktu DB
+                .orderBy('id', 'desc')
+                .execute();
+
+            if (recentLogs.length === 0) {
+                throw new Error('DEV MODE: Tidak ditemukan interaksi pesan masuk dari nomor ini dalam 24 jam terakhir. Silakan mulai pesan dari nomor penerima.');
+            }
+
+            // 3. Validasi metadata phone_number_id dari kolom raw_json di level aplikasi
+            let isPhoneNumberIdMatched = false;
+            for (const log of recentLogs) {
+                try {
+                    const payload = typeof log.raw_json === 'string' ? JSON.parse(log.raw_json) : log.raw_json;
+                    const valueObj = payload?.entry?.[0]?.changes?.[0]?.value;
+
+                    const metadata = valueObj?.metadata;
+                    const logPhoneNumberId = metadata?.phone_number_id;
+
+                    const messageObj = valueObj?.messages?.[0];
+                    const waTimestampStr = messageObj?.timestamp;
+
+                    // Validasi kecocokan phone_number_id
+                    if (logPhoneNumberId && logPhoneNumberId === this.waPhoneNumberId) {
+                        // Validasi rentang waktu berdasarkan timestamp asli dari server Meta
+                        if (waTimestampStr) {
+                            const waMessageTimeMs = Number(waTimestampStr) * 1000;
+                            const nowMs = Date.now();
+                            const twentyFourHoursMs = 24 * 60 * 60 * 1000;
+
+                            if (nowMs - waMessageTimeMs < twentyFourHoursMs) {
+                                isPhoneNumberIdMatched = true;
+                                this.logger.log(`Sesi gratis valid. Pesan WA asli dikirim pada: ${new Date(waMessageTimeMs).toISOString()}`);
+                                break; // Keluar dari loop karena sesi terbukti valid
+                            }
+                        }
+                    }
+                } catch (jsonErr) {
+                    this.logger.error(`Gagal melakukan parse raw_json pada salah satu log: ${jsonErr.message}`);
+                }
+            }
+
+            // Jika setelah di-loop tidak ada satu pun objek log yang memenuhi syarat metadata & timestamp
+            if (!isPhoneNumberIdMatched) {
+                throw new Error(`Mode DEV aktif: Sesi interaksi chat masuk terakhir dari WhatsApp ID (${this.waPhoneNumberId}) sudah kadaluarsa atau tidak cocok.`);
+            }
+        }
+    }
 
     async createQueue(data: {
         phone: string;
@@ -39,6 +128,7 @@ export class WaApiService {
         nama: string;
         periode: string;
         file: Express.Multer.File;
+        dev_mode: number;
     }) {
         return await this.db
             .insertInto(this.tableQue)
@@ -51,6 +141,7 @@ export class WaApiService {
                 file_mime: data.file.mimetype,
                 file_base64: data.file.buffer.toString('base64'),
                 status: 'WAITING',
+                dev_mode: data.dev_mode,
             })
             .execute();
     }
@@ -63,10 +154,15 @@ export class WaApiService {
         nama: string;
         periode: string;
         file: Express.Multer.File;
+        dev_mode: number;
     }) {
+        // validasi mode
+
         let mediaId: string | null = null;
 
         try {
+            await this.validateDevMode(data.dev_mode, data.phone);
+
             // 1. Upload media ke Meta Server
             mediaId = await this.uploadMedia(data.file);
 
@@ -146,7 +242,7 @@ export class WaApiService {
                 .where('id', '=', data.queueId)
                 .execute();
 
-            throw new HttpException(err?.response?.data || 'Failed send whatsapp', err?.response?.status || 500);
+            throw new HttpException(errorMessage || 'Failed send whatsapp', err?.response?.status || 500);
         }
     }
 
@@ -187,7 +283,7 @@ export class WaApiService {
 
     private async sendTemplate(data: {
         to: string;
-        mediaId: string;
+        mediaId: string | null;
         nama: string;
         nik: string;
         periode: string;
@@ -301,5 +397,24 @@ export class WaApiService {
             .orderBy('q.id', 'desc')
             .limit(limit)
             .execute();
+    }
+
+    getCleanIp(rawIp: string | undefined): string {
+        if (!rawIp) return '';
+
+        // 1. Hapus semua spasi yang tidak sengaja ada di dalam string IP
+        let cleanIp = rawIp.replace(/\s+/g, '');
+
+        // 2. Jika IP adalah localhost IPv6 murni (::1), ubah ke format IPv4
+        if (cleanIp === '::1') {
+            return '127.0.0.1';
+        }
+
+        // 3. Buang prefix ::ffff: jika ip berupa IPv4-mapped IPv6
+        if (cleanIp.startsWith('::ffff:')) {
+            cleanIp = cleanIp.replace('::ffff:', '');
+        }
+
+        return cleanIp;
     }
 }
