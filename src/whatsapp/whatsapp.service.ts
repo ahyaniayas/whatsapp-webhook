@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { raw } from 'express';
 import { Kysely } from 'kysely';
 import { LoggerService } from 'src/logger/logger.service';
 
@@ -40,7 +41,6 @@ export class WhatsappService {
                 for (const status of statuses) {
                     await this.handleMessageStatus(
                         status,
-                        value,
                         body,
                         changes,
                     );
@@ -59,8 +59,6 @@ export class WhatsappService {
     ) {
         const from = message.from;
         const type = message.type;
-
-        this.logger.log(`Incoming message from ${from}`);
 
         await this.loggerService.insertWebhookLog({
             webhook_object: rawBody?.object,
@@ -88,13 +86,12 @@ export class WhatsappService {
 
             wa_timestamp: Number(message?.timestamp),
 
-            raw_json: JSON.stringify(message),
+            raw_json: JSON.stringify(rawBody),
         });
     }
 
     private async handleMessageStatus(
         status: any,
-        value: any,
         rawBody: any,
         changes: any,
     ) {
@@ -124,7 +121,7 @@ export class WhatsappService {
 
             wa_timestamp: Number(status?.timestamp),
 
-            raw_json: JSON.stringify(status),
+            raw_json: JSON.stringify(rawBody),
         });
     }
 }
