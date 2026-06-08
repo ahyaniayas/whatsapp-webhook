@@ -118,7 +118,7 @@ export class WaApiService {
 
             // Jika setelah di-loop tidak ada satu pun objek log yang memenuhi syarat metadata & timestamp
             if (!isPhoneNumberIdMatched) {
-                throw new Error(`Mode DEV aktif: Sesi interaksi chat masuk terakhir dari WhatsApp ID (${this.waPhoneNumberId}) sudah kadaluarsa atau tidak cocok.`);
+                throw new Error(`Mode DEV aktif: Sesi interaksi chat masuk terakhir dengan WhatsApp ID (${this.waPhoneNumberId}) sudah kadaluarsa atau tidak cocok.`);
             }
         }
     }
@@ -176,13 +176,13 @@ export class WaApiService {
                 periode: data.periode,
             });
 
-            const waMessageId = response?.data?.messages?.[0]?.id;
+            const waMessageId = response?.data?.messages?.[0]?.id  || v7();
 
             // 3. Success log ke audit table system Anda
             await this.loggerService.insertWebhookLog({
                 webhook_object: 'whatsapp_business_account',
                 webhook_field: 'messages',
-                wa_message_id: waMessageId || v7(),
+                wa_message_id: waMessageId,
                 to_number: data.phone,
                 message_type: 'template',
                 message_status: 'requested',
