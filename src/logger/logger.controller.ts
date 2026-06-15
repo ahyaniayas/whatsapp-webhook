@@ -7,6 +7,7 @@ export class LoggerController {
     constructor(private readonly loggerService: LoggerService) { }
 
     @Get()
+
     async list(
         @Query('waMessageId') waMessageId: string,
         @Query('from') from: string,
@@ -202,7 +203,7 @@ export class LoggerController {
 
             // Tombol aksi pembuka tab baru yang aman
             const actionButton = row.wa_message_id
-                ? `<a href="/logger/${row.wa_message_id}" class="btn-action" target="_blank" rel="noopener noreferrer">Lihat Log</a>`
+                ? `<a href="/logger/${row.wa_message_id}" class="btn-action" rel="noopener noreferrer">Lihat Log</a>`
                 : `<span class="btn-disabled" title="Data log tidak valid/Message ID kosong">Lihat Log</span>`;
 
             return `
