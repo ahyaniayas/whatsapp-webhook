@@ -20,16 +20,22 @@ export class LoggerService {
 
     async insertWebhookLog(data: any) {
         try {
-            await this.db
+            const result = await this.db
                 .insertInto(this.tableLog)
                 .values(data)
+                .returningAll()
                 .execute();
+
+            if (!result || result.length == 0) {
+                throw new Error('Failed to insert webhook log. No data returned.');
+            }
+            return result[0];
         } catch (err) {
             this.logger.error(err);
         }
     }
 
-    async list(params: { waMessageId?: string; from?: string; to?: string; status?: string; limit?: number }) {
+    async list(params: { waMessageId?: string; from?: string; to?: string; status?: string; app: string; limit?: number }) {
         let query = this.db
             .selectFrom(`${this.tableLog} as log`)
             .select([
@@ -43,6 +49,7 @@ export class LoggerService {
                     json_agg(
                         json_build_object(
                             'id', log.id,
+                            'app', log.app,
                             'message_type', log.message_type,
                             'status', log.message_status,
                             'error_title', log.error_title,
@@ -54,6 +61,11 @@ export class LoggerService {
                 sql<string>`max(log.created_at)`.as('created_at'),
             ])
             .groupBy('log.wa_message_id'); // Murni grouping berdasarkan 1 Message ID saja
+
+        // Di dalam method list() milik LoggerService:
+        if (params.app) {
+            query = query.where('log.app', 'ilike', `%${params.app}%`);
+        }
 
         // Tambahkan potongan filter ini di dalam logger.service.ts Anda
         if (params.waMessageId) {

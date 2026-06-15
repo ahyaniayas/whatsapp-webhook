@@ -8,12 +8,15 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ScheduleModule } from '@nestjs/schedule';
 
+const isSchedulerEnabled = process.env.WA_SCHEDULER === 'true';
+const schedulerModules = isSchedulerEnabled ? [ScheduleModule.forRoot()] : [];
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    ScheduleModule.forRoot(),
+    ...schedulerModules,
     ConfigKyselyModule,
     WhatsappModule,
     WaApiModule,

@@ -119,6 +119,7 @@ export class WaApiProcessorService {
                                 periode: job.periode,
                                 file: multerFile,
                                 dev_mode: job.dev_mode,
+                                app: job.app,
                             });
 
                         } catch (jobErr: any) {

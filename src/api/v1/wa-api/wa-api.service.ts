@@ -60,7 +60,7 @@ export class WaApiService {
             }
         }
 
-        return appKeyData.mode;
+        return appKeyData;
     }
 
     async validateDevMode(devMode: number, targetPhone: string) {
@@ -129,6 +129,7 @@ export class WaApiService {
         periode: string;
         file: Express.Multer.File;
         dev_mode: number;
+        app: string;
     }) {
         return await this.db
             .insertInto(this.tableQue)
@@ -142,6 +143,7 @@ export class WaApiService {
                 file_base64: data.file.buffer.toString('base64'),
                 status: 'WAITING',
                 dev_mode: data.dev_mode,
+                app: data.app,
             })
             .execute();
     }
@@ -155,6 +157,7 @@ export class WaApiService {
         periode: string;
         file: Express.Multer.File;
         dev_mode: number;
+        app: string;
     }) {
         // validasi mode
 
@@ -178,7 +181,8 @@ export class WaApiService {
             const waMessageId = response?.data?.messages?.[0]?.id;
 
             // 3. Success log ke audit table system Anda
-            await this.loggerService.insertWebhookLog({
+            const logResult = await this.loggerService.insertWebhookLog({
+                app: data.app,
                 webhook_object: 'whatsapp_business_account',
                 webhook_field: 'messages',
                 wa_message_id: waMessageId,
@@ -196,8 +200,9 @@ export class WaApiService {
             await this.db
                 .updateTable(this.tableQue)
                 .set({
+                    wa_message_id: logResult?.wa_message_id,
                     status: 'SUCCESS',
-                    updated_at: new Date()
+                    updated_at: new Date(),
                 })
                 .where('id', '=', data.queueId)
                 .execute();
@@ -215,7 +220,8 @@ export class WaApiService {
             this.logger.error(`Error memproses queue ID ${data.queueId}: ${errorMessage}`);
 
             // 1. Gagal log ke audit table system Anda
-            await this.loggerService.insertWebhookLog({
+            const logResult = await this.loggerService.insertWebhookLog({
+                app: data.app,
                 webhook_object: 'whatsapp_business_account',
                 webhook_field: 'messages',
                 to_number: data.phone,
@@ -234,10 +240,11 @@ export class WaApiService {
             await this.db
                 .updateTable(this.tableQue)
                 .set((eb) => ({
+                    wa_message_id: logResult?.wa_message_id,
                     status: 'FAILED',
                     attempts: eb('attempts', '+', 1), // Increment jumlah percobaan
                     error_message: errorMessage,
-                    updated_at: new Date()
+                    updated_at: new Date(),
                 }))
                 .where('id', '=', data.queueId)
                 .execute();
@@ -359,9 +366,16 @@ export class WaApiService {
                 'q.status',
                 'q.attempts',
                 'q.error_message',
+                'q.app',
+                'q.wa_message_id',
                 'q.created_at',
                 'q.updated_at',
             ]);
+
+        // Filter berdasarkan app
+        if (params.app) {
+            query = query.where('q.app', 'ilike', `%${params.app}%`);
+        }
 
         // Filter berdasarkan nomor telepon (phone)
         if (params.phone) {

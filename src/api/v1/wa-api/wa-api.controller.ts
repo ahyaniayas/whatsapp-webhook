@@ -47,7 +47,7 @@ export class WaApiController {
 
         // validasi app access
         const clientIp = this.waApiService.getCleanIp(req.ip);
-        const mode = await this.waApiService.validateAppAccess(hAppKey, clientIp);
+        const appKeyData = await this.waApiService.validateAppAccess(hAppKey, clientIp);
 
         // Langsung masukkan ke database tabel antrean
         await this.waApiService.createQueue({
@@ -56,7 +56,8 @@ export class WaApiController {
             nama,
             periode,
             file,
-            dev_mode: mode === 'DEV' ? 1 : 0,
+            dev_mode: appKeyData.mode === 'DEV' ? 1 : 0,
+            app: appKeyData.app,
         })
 
         return {
@@ -68,6 +69,7 @@ export class WaApiController {
     @Get('queue')
     async getListQueue(
         @Headers('api-key') hApiKey: string,
+        @Query('app') app: string,
         @Query('phone') phone: string,
         @Query('nik') nik: string,
         @Query('nama') nama: string,
@@ -78,6 +80,7 @@ export class WaApiController {
     ) {
         // Ambil data antrean dari service menggunakan filter query params
         const rows = await this.waApiService.listQueue({
+            app,
             phone,
             nik,
             nama,
@@ -124,10 +127,16 @@ export class WaApiController {
                 .processing { background: #f59e0b; }
                 .success { background: #10b981; }
                 .failed { background: #ef4444; }
+                .app-badge { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; text-transform: none; font-family: monospace; }
                 
                 .text-muted { color: #94a3b8; }
                 .font-mono { font-family: monospace; font-size: 0.9rem; }
-                .error-box { max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ef4444; font-size: 0.8rem; }
+                .error-box { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ef4444; font-size: 0.8rem; }
+                
+                /* Action Button Component */
+                .btn-action { display: inline-block; padding: 0.375rem 0.75rem; background: #6366f1; color: white; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-decoration: none; transition: background 0.2s; }
+                .btn-action:hover { background: #4f46e5; }
+                .btn-disabled { display: inline-block; padding: 0.375rem 0.75rem; background: #e2e8f0; color: #94a3b8; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: not-allowed; text-decoration: none; }
             </style>
         </head>
         <body>
@@ -135,6 +144,11 @@ export class WaApiController {
                 <h1>WhatsApp Queue Monitor</h1>
                 
                 <form method="GET">
+                    <div class="form-group">
+                        <label>APP</label>
+                        <input type="text" name="app" placeholder="e.g. APP..." value="${app || ''}" />
+                    </div>
+
                     <div class="form-group">
                         <label>Phone Number</label>
                         <input type="text" name="phone" placeholder="e.g. 628..." value="${phone || ''}" />
@@ -187,6 +201,7 @@ export class WaApiController {
                             <tr>
                                 <th>ID</th>
                                 <th>Created At</th>
+                                <th>App</th>
                                 <th>NIK</th>
                                 <th>Nama</th>
                                 <th>Phone</th>
@@ -195,20 +210,27 @@ export class WaApiController {
                                 <th>Attempts</th>
                                 <th>Status</th>
                                 <th>Error Message</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${rows.length === 0 ? `<tr><td colspan="10" style="text-align: center;" class="text-muted">Tidak ada antrean ditemukan</td></tr>` : ''}
+                            ${rows.length === 0 ? `<tr><td colspan="12" style="text-align: center;" class="text-muted">Tidak ada antrean ditemukan</td></tr>` : ''}
                             ${rows.map((row) => {
             const date = new Date(row.created_at);
             const formattedDate = date.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }) + '.' + String(date.getMilliseconds()).padStart(3, '0');
+
+            // Logika tombol Lihat Log kondisional
+            const actionButton = row.wa_message_id
+                ? `<a href="/logger/${row.wa_message_id}" class="btn-action" target="_blank">Lihat Log</a>`
+                : `<span class="btn-disabled" title="Pesan belum diproses/tidak ada Message ID">Lihat Log</span>`;
 
             return `
                                 <tr>
                                     <td class="font-mono text-muted">${row.id}</td>
                                     <td class="font-mono">${formattedDate}</td>
+                                    <td><span class="badge app-badge">${row.app || '-'}</span></td>
                                     <td>${row.nik}</td>
-                                    <strong><td>${row.nama}</td></strong>
+                                    <td><strong>${row.nama}</strong></td>
                                     <td class="font-mono">${row.phone}</td>
                                     <td><span class="badge waiting">${row.periode}</span></td>
                                     <td class="text-muted" style="font-size: 0.8rem;">${row.file_name}</td>
@@ -223,6 +245,7 @@ export class WaApiController {
                                             ${row.error_message || '<span class="text-muted">-</span>'}
                                         </div>
                                     </td>
+                                    <td>${actionButton}</td>
                                 </tr>
                                 `;
         }).join('')}
