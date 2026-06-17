@@ -162,17 +162,21 @@ export class WaApiService {
         // validasi mode
 
         let mediaId: string | null = null;
+        let mediaName: string | null = null;
 
         try {
             await this.validateDevMode(data.dev_mode, data.phone);
 
             // 1. Upload media ke Meta Server
-            mediaId = await this.uploadMedia(data.file);
+            const media = await this.uploadMedia(data.file);
+            mediaId = media.id;
+            mediaName = media.name;
 
             // 2. Kirim template menggunakan mediaId
             const response = await this.sendTemplate({
                 to: data.phone,
                 mediaId,
+                mediaName,
                 nama: data.nama,
                 nik: data.nik,
                 periode: data.periode,
@@ -255,7 +259,7 @@ export class WaApiService {
 
     private async uploadMedia(
         file: Express.Multer.File,
-    ): Promise<string> {
+    ): Promise<{ id: string; name: string }> {
         const form = new FormData();
 
         form.append(
@@ -285,12 +289,16 @@ export class WaApiService {
             ),
         );
 
-        return response.data.id;
+        return {
+            id: response.data.id,
+            name: file.originalname,
+        };
     }
 
     private async sendTemplate(data: {
         to: string;
         mediaId: string | null;
+        mediaName: string | null;
         nama: string;
         nik: string;
         periode: string;
@@ -315,7 +323,7 @@ export class WaApiService {
                                         type: 'document',
                                         document: {
                                             id: data.mediaId,
-                                            filename: `Slip-Gaji-${data.periode}.pdf`,
+                                            filename: data.mediaName,
                                         },
                                     },
                                 ],
