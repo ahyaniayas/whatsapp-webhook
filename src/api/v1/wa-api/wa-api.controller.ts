@@ -27,6 +27,18 @@ export class WaApiController {
         private readonly waApiService: WaApiService,
     ) { }
 
+    @Get('health')
+    healthCheck(@Req() req: Request) {
+        // Ambil IP klien menggunakan service kamu
+        const clientIp = this.waApiService.getCleanIp(req.ip);
+
+        return {
+            status: 'OK', // Indikator bahwa server sedang berjalan (UP)
+            ip: clientIp,
+            timestamp: new Date().toISOString(), // Opsional: Untuk mengetahui waktu pengecekan
+        };
+    }
+
     @Post('send-slip-gaji')
     @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
     async sendSlipGaji(
