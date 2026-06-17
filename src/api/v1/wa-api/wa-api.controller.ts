@@ -4,6 +4,7 @@ import {
     FileTypeValidator,
     Get,
     Headers,
+    HttpException,
     ParseFilePipe,
     Post,
     Query,
@@ -63,6 +64,75 @@ export class WaApiController {
         return {
             success: true,
             message: 'Slip gaji berhasil dimasukkan ke antrean jadwal pengiriman.',
+        };
+    }
+
+    @Post('send-slip-gaji-base64')
+    async sendSlipGajiBase64(
+        @Headers('api-key') hApiKey: string,
+        @Headers('app-key') hAppKey: string,
+        @Body('phone') phone: string,
+        @Body('nik') nik: string,
+        @Body('nama') nama: string,
+        @Body('periode') periode: string,
+        @Body('file') fileBase64: string, // Menerima base64 string
+        @Req() req: Request,
+    ) {
+        // 1. Validasi API Key
+        if (hApiKey !== this.apiKey) {
+            throw new UnauthorizedException('Invalid API Key');
+        }
+
+        // 2. Validasi kelengkapan data
+        if (!fileBase64 || !phone || !nik || !nama || !periode) {
+            throw new HttpException('Semua field (phone, nik, nama, periode, fileBase64) wajib diisi', 400);
+        }
+
+        // 3. Bersihkan prefix Base64 jika client mengirimkan format Data URL 
+        // (contoh: "data:application/pdf;base64,JVBERi0...")
+        const base64Data = fileBase64.replace(/^data:application\/pdf;base64,/, '');
+
+        // Validasi format Header PDF (File PDF dalam base64 selalu diawali dengan "JVBERi0")
+        if (!base64Data.startsWith('JVBERi0')) {
+            throw new HttpException('Format fileBase64 tidak valid. Pastikan file adalah PDF.', 400);
+        }
+
+        // 4. Konversi Base64 string menjadi Buffer biner murni
+        const pdfBuffer = Buffer.from(base64Data, 'base64');
+
+        // 5. Mocking objek Express.Multer.File agar kompatibel dengan Service layer kamu
+        const mockFile: Express.Multer.File = {
+            fieldname: 'file',
+            originalname: `Slip-Gaji-${periode}-${nik}.pdf`,
+            encoding: 'base64',
+            mimetype: 'application/pdf',
+            buffer: pdfBuffer,
+            size: pdfBuffer.length,
+            // Properti di bawah ini dikosongkan karena menggunakan memoryStorage
+            stream: null as any,
+            destination: '',
+            filename: '',
+            path: '',
+        };
+
+        // 6. Validasi app access (menggunakan logika kamu yang sudah ada)
+        const clientIp = this.waApiService.getCleanIp(req.ip);
+        const appKeyData = await this.waApiService.validateAppAccess(hAppKey, clientIp);
+
+        // 7. Masukkan ke database tabel antrean menggunakan service yang sama
+        await this.waApiService.createQueue({
+            phone,
+            nik,
+            nama,
+            periode,
+            file: mockFile, // Oper mockFile hasil konversi Base64
+            dev_mode: appKeyData.mode === 'DEV' ? 1 : 0,
+            app: appKeyData.app,
+        });
+
+        return {
+            success: true,
+            message: 'Slip gaji (Base64) berhasil dimasukkan ke antrean jadwal pengiriman.',
         };
     }
 
