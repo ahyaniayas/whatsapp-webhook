@@ -1,13 +1,15 @@
-import { Controller, Get, Param, Query, Res } from '@nestjs/common';
+import { Controller, Get, Param, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { LoggerService } from './logger.service';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { navBar } from 'src/shared/html.util';
 
 @Controller('logger')
 export class LoggerController {
     constructor(private readonly loggerService: LoggerService) { }
 
     @Get()
-
+    @UseGuards(AuthGuard)
     async list(
         @Query('waMessageId') waMessageId: string,
         @Query('from') from: string,
@@ -27,9 +29,10 @@ export class LoggerController {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>WhatsApp Message Logger</title>
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg">
             <style>
                 * { box-sizing: border-box; margin: 0; padding: 0; }
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 2rem; background: #f8fafc; color: #1e293b; }
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; color: #1e293b; }
                 h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 1.5rem; color: #0f172a; display: flex; align-items: center; gap: 0.5rem; }
                 h1::before { content: ""; display: inline-block; width: 8px; height: 28px; background: #6366f1; border-radius: 4px; }
                 
@@ -87,7 +90,8 @@ export class LoggerController {
             </style>
         </head>
         <body>
-            <div class="container">
+            ${navBar('logger')}
+            <div class="container" style="padding:2rem;">
                 <h1>WhatsApp Message Logger</h1>
                 
                 <form method="GET">
@@ -250,6 +254,7 @@ export class LoggerController {
     }
 
     @Get(':waMessageId')
+    @UseGuards(AuthGuard)
     async detail(@Param('waMessageId') waMessageId: string, @Res() res: Response) {
         const rows = await this.loggerService.detail(waMessageId);
 
@@ -260,9 +265,10 @@ export class LoggerController {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>WhatsApp Message Logger - Detail</title>
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg">
             <style>
                 * { box-sizing: border-box; margin: 0; padding: 0; }
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 2rem; background: #f8fafc; color: #1e293b; }
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; color: #1e293b; }
 
                 .header-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
                 h1 { font-size: 1.75rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 0.5rem; }
@@ -295,7 +301,8 @@ export class LoggerController {
             </style>
         </head>
         <body>
-            <div class="container">
+            ${navBar('logger')}
+            <div class="container" style="padding:2rem;">
                 <div class="header-wrapper">
                     <h1>WhatsApp Message Logger - Detail</h1>
                     <a href="/logger" class="btn-back">&larr; Back to Dashboard</a>

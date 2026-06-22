@@ -12,10 +12,13 @@ import {
     Res,
     UnauthorizedException,
     UploadedFile,
+    UseGuards,
     UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { WaApiService } from './wa-api.service';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { navBar } from 'src/shared/html.util';
 import { memoryStorage } from 'multer';
 import type { Request, Response } from 'express';
 
@@ -149,6 +152,7 @@ export class WaApiController {
     }
 
     @Get('queue')
+    @UseGuards(AuthGuard)
     async getListQueue(
         @Headers('api-key') hApiKey: string,
         @Query('app') app: string,
@@ -178,9 +182,10 @@ export class WaApiController {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>WhatsApp Queue Monitor</title>
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg">
             <style>
                 * { box-sizing: border-box; margin: 0; padding: 0; }
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 2rem; background: #f8fafc; color: #1e293b; }
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; color: #1e293b; }
                 h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 1.5rem; color: #0f172a; display: flex; align-items: center; gap: 0.5rem; }
                 h1::before { content: ""; display: inline-block; width: 8px; height: 28px; background: #10b981; border-radius: 4px; }
                 
@@ -196,8 +201,8 @@ export class WaApiController {
                 button[type="submit"]:hover { background: #059669; }
                 
                 /* Tabel Wrapper */
-                .table-wrapper { background: white; border-radius: 12px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05); overflow: hidden; border: 1px solid #e2e8f0; }
-                table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
+                .table-wrapper { background: white; border-radius: 12px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05); overflow-x: auto; border: 1px solid #e2e8f0; -webkit-overflow-scrolling: touch; }
+                table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; min-width: 1100px; }
                 th { background: #f8fafc; padding: 0.875rem 1rem; font-weight: 600; color: #475569; border-bottom: 1px solid #e2e8f0; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
                 td { padding: 1rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
                 tr:last-child td { border-bottom: none; }
@@ -222,7 +227,8 @@ export class WaApiController {
             </style>
         </head>
         <body>
-            <div class="container">
+            ${navBar('queue')}
+            <div class="container" style="padding:2rem;">
                 <h1>WhatsApp Queue Monitor</h1>
                 
                 <form method="GET">
