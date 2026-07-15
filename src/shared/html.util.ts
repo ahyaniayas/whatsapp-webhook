@@ -2,8 +2,8 @@ export function navBar(active: 'dashboard' | 'queue' | 'logger' | 'app-keys' | '
     const links: { href: string; label: string; key: string }[] = [
         { href: '/dashboard', label: 'Dashboard', key: 'dashboard' },
         { href: '/api/v1/wa-api/queue', label: 'Queue Monitor', key: 'queue' },
-        { href: '/logger', label: 'Logger', key: 'logger' },
         { href: '/app-keys', label: 'App Keys', key: 'app-keys' },
+        { href: '/logger', label: 'Logger', key: 'logger' },
         { href: '/access-log', label: 'Access Log', key: 'access-log' },
     ];
     return `
