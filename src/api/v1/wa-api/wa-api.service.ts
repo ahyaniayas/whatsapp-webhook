@@ -12,6 +12,7 @@ import { firstValueFrom } from 'rxjs';
 import FormData from 'form-data';
 import { LoggerService } from 'src/logger/logger.service';
 import { Kysely } from 'kysely';
+import { getWaPhoneNumbers } from 'src/shared/wa-phone-numbers.util';
 
 @Injectable()
 export class WaApiService {
@@ -21,7 +22,6 @@ export class WaApiService {
 
     private readonly waApiBaseUrl = process.env.WA_API_BASE_URL;
     private readonly waApiVersion = process.env.WA_API_VERSION;
-    private readonly waPhoneNumberId = process.env.WA_PHONE_NUMBER_ID;
     private readonly waToken = process.env.WA_TOKEN;
     private readonly waTemplateSlipGaji = 'slip_gaji_notification';
 
@@ -50,6 +50,15 @@ export class WaApiService {
             throw new UnauthorizedException('Invalid or inactive APP Key');
         }
 
+        // 1b. Validasi nomor pengirim (wa_phone_id) sudah dikonfigurasi dan terdaftar
+        if (!appKeyData.wa_phone_id) {
+            throw new UnauthorizedException(`App '${appKeyData.app}' belum memiliki nomor pengirim (wa_phone_id) yang dikonfigurasi`);
+        }
+        const isRegisteredSender = getWaPhoneNumbers().some((p) => p.id === appKeyData.wa_phone_id);
+        if (!isRegisteredSender) {
+            throw new UnauthorizedException(`Nomor pengirim (wa_phone_id: ${appKeyData.wa_phone_id}) tidak terdaftar di WA_PHONE_NUMBERS`);
+        }
+
         // 2. Validasi Whitelist IP Address (jika kolom ips di-set)
         if (appKeyData.ips) {
             const allowedIps = appKeyData.ips.split(';').map((ip: string) => ip.trim());
@@ -63,7 +72,7 @@ export class WaApiService {
         return appKeyData;
     }
 
-    async validateDevMode(devMode: number, targetPhone: string) {
+    async validateDevMode(devMode: number, targetPhone: string, waPhoneId: string) {
         // 1. Validasi Khusus Mode DEV: Harus ada interaksi pesan masuk dalam 24 jam terakhir
         if (devMode) {
             // 1. Hitung batas waktu 24 jam ke belakang
@@ -96,7 +105,7 @@ export class WaApiService {
                     const waTimestampStr = messageObj?.timestamp;
 
                     // Validasi kecocokan phone_number_id
-                    if (logPhoneNumberId && logPhoneNumberId === this.waPhoneNumberId) {
+                    if (logPhoneNumberId && logPhoneNumberId === waPhoneId) {
                         // Validasi rentang waktu berdasarkan timestamp asli dari server Meta
                         if (waTimestampStr) {
                             const waMessageTimeMs = Number(waTimestampStr) * 1000;
@@ -117,7 +126,7 @@ export class WaApiService {
 
             // Jika setelah di-loop tidak ada satu pun objek log yang memenuhi syarat metadata & timestamp
             if (!isPhoneNumberIdMatched) {
-                throw new Error(`Mode DEV aktif: Sesi interaksi chat masuk terakhir dengan WhatsApp ID (${this.waPhoneNumberId}) sudah kadaluarsa atau tidak cocok.`);
+                throw new Error(`Mode DEV aktif: Sesi interaksi chat masuk terakhir dengan WhatsApp ID (${waPhoneId}) sudah kadaluarsa atau tidak cocok.`);
             }
         }
     }
@@ -130,6 +139,7 @@ export class WaApiService {
         file: Express.Multer.File;
         dev_mode: number;
         app: string;
+        wa_phone_id: string;
     }) {
         return await this.db
             .insertInto(this.tableQue)
@@ -144,6 +154,7 @@ export class WaApiService {
                 status: 'WAITING',
                 dev_mode: data.dev_mode,
                 app: data.app,
+                wa_phone_id: data.wa_phone_id,
             })
             .execute();
     }
@@ -158,6 +169,7 @@ export class WaApiService {
         file: Express.Multer.File;
         dev_mode: number;
         app: string;
+        wa_phone_id: string;
     }) {
         // validasi mode
 
@@ -165,10 +177,10 @@ export class WaApiService {
         let mediaName: string | null = null;
 
         try {
-            await this.validateDevMode(data.dev_mode, data.phone);
+            await this.validateDevMode(data.dev_mode, data.phone, data.wa_phone_id);
 
             // 1. Upload media ke Meta Server
-            const media = await this.uploadMedia(data.file);
+            const media = await this.uploadMedia(data.file, data.wa_phone_id);
             mediaId = media.id;
             mediaName = media.name;
 
@@ -180,6 +192,7 @@ export class WaApiService {
                 nama: data.nama,
                 nik: data.nik,
                 periode: data.periode,
+                waPhoneId: data.wa_phone_id,
             });
 
             const waMessageId = response?.data?.messages?.[0]?.id;
@@ -259,6 +272,7 @@ export class WaApiService {
 
     private async uploadMedia(
         file: Express.Multer.File,
+        waPhoneId: string,
     ): Promise<{ id: string; name: string }> {
         const form = new FormData();
 
@@ -278,7 +292,7 @@ export class WaApiService {
 
         const response = await firstValueFrom(
             this.httpService.post(
-                `${this.waApiBaseUrl}/${this.waApiVersion}/${this.waPhoneNumberId}/media`,
+                `${this.waApiBaseUrl}/${this.waApiVersion}/${waPhoneId}/media`,
                 form,
                 {
                     headers: {
@@ -302,10 +316,11 @@ export class WaApiService {
         nama: string;
         nik: string;
         periode: string;
+        waPhoneId: string;
     }) {
         return firstValueFrom(
             this.httpService.post(
-                `${this.waApiBaseUrl}/${this.waApiVersion}/${this.waPhoneNumberId}/messages`,
+                `${this.waApiBaseUrl}/${this.waApiVersion}/${data.waPhoneId}/messages`,
                 {
                     messaging_product: 'whatsapp',
                     to: data.to,

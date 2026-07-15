@@ -120,6 +120,7 @@ export class WaApiProcessorService {
                                 file: multerFile,
                                 dev_mode: job.dev_mode,
                                 app: job.app,
+                                wa_phone_id: job.wa_phone_id,
                             });
 
                         } catch (jobErr: any) {

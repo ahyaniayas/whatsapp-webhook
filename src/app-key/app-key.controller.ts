@@ -3,6 +3,7 @@ import { AuthGuard } from '../auth/auth.guard';
 import { AuthService } from '../auth/auth.service';
 import { AppKeyService } from './app-key.service';
 import { navBar, escapeHtml } from '../shared/html.util';
+import { getWaPhoneNumbers } from '../shared/wa-phone-numbers.util';
 import type { Request, Response } from 'express';
 
 @Controller('app-keys')
@@ -31,6 +32,16 @@ export class AppKeyController {
             is_active: filterIsActive || undefined,
         });
 
+        const waPhoneNumbers = getWaPhoneNumbers();
+        const phoneOptionsHtml = (selectedId?: string) => waPhoneNumbers.map((p) =>
+            `<option value="${escapeHtml(p.id)}" ${selectedId === p.id ? 'selected' : ''}>${escapeHtml(p.phone)} (${escapeHtml(p.id)})</option>`
+        ).join('');
+        const senderLabel = (waPhoneId: string | null) => {
+            if (!waPhoneId) return '<span class="text-muted">-</span>';
+            const match = waPhoneNumbers.find((p) => p.id === waPhoneId);
+            return match ? escapeHtml(match.phone) : `<span class="text-muted" title="Tidak terdaftar di WA_PHONE_NUMBERS">${escapeHtml(waPhoneId)}</span>`;
+        };
+
         const rows = records.map((r) => {
             const maskedKey = r.key ? r.key.substring(0, 8) + '••••••••' : '-';
             const createdAt = r.created_at
@@ -42,6 +53,7 @@ export class AppKeyController {
             const toggleClass = r.is_active === 'Y' ? 'btn-warn' : 'btn-success';
             const safeIps = escapeHtml(r.ips || '');
             const safeMode = escapeHtml(r.mode || 'DEV');
+            const safeWaPhoneId = escapeHtml(r.wa_phone_id || '');
             return `
             <tr>
                 <td class="font-mono text-muted">${r.id}</td>
@@ -49,11 +61,12 @@ export class AppKeyController {
                 <td class="font-mono" title="${escapeHtml(r.key)}" style="cursor:help;">${escapeHtml(maskedKey)}</td>
                 <td><span class="badge mode-${(r.mode || '').toLowerCase()}">${safeMode}</span></td>
                 <td class="font-mono text-muted" style="font-size:0.8rem;">${r.ips ? safeIps : '<span class="text-muted">-</span>'}</td>
+                <td class="font-mono" style="font-size:0.8rem;">${senderLabel(r.wa_phone_id)}</td>
                 <td><span class="badge ${activeClass}">${activeLabel}</span></td>
                 <td class="text-muted" style="font-size:0.8rem;">${escapeHtml(r.created_by || '-')}<br>${createdAt}</td>
                 <td style="white-space:nowrap;">
                     <button type="button" class="btn-action btn-edit"
-                        onclick="openEdit(${r.id}, '${safeMode}', '${safeIps}', '${escapeHtml(r.app)}')">
+                        onclick="openEdit(${r.id}, '${safeMode}', '${safeIps}', '${escapeHtml(r.app)}', '${safeWaPhoneId}')">
                         Edit
                     </button>
                     <form method="POST" action="/app-keys/${r.id}/regen-key" style="display:inline;"
@@ -214,6 +227,7 @@ export class AppKeyController {
                         <th>Key</th>
                         <th>Mode</th>
                         <th>Whitelist IPs</th>
+                        <th>Nomor Pengirim</th>
                         <th>Status</th>
                         <th>Dibuat Oleh</th>
                         <th>Aksi</th>
@@ -221,7 +235,7 @@ export class AppKeyController {
                 </thead>
                 <tbody>
                     ${records.length === 0
-                        ? '<tr><td colspan="8" style="text-align:center;padding:2rem;" class="text-muted">Belum ada App Key</td></tr>'
+                        ? '<tr><td colspan="9" style="text-align:center;padding:2rem;" class="text-muted">Belum ada App Key</td></tr>'
                         : rows}
                 </tbody>
             </table>
@@ -251,6 +265,13 @@ export class AppKeyController {
                 <div class="form-group">
                     <label for="createIps">Whitelist IP (opsional)</label>
                     <input type="text" id="createIps" name="ips" placeholder="192.168.1.1;10.0.0.2" />
+                </div>
+                <div class="form-group">
+                    <label for="createWaPhoneId">Nomor Pengirim</label>
+                    <select id="createWaPhoneId" name="wa_phone_id" required>
+                        <option value="">-- Pilih nomor pengirim --</option>
+                        ${phoneOptionsHtml()}
+                    </select>
                 </div>
             </div>
             <div class="dialog-footer">
@@ -284,6 +305,13 @@ export class AppKeyController {
                     <input type="text" id="editIps" name="ips" placeholder="192.168.1.1;10.0.0.2" />
                 </div>
                 <div class="form-group">
+                    <label for="editWaPhoneId">Nomor Pengirim</label>
+                    <select id="editWaPhoneId" name="wa_phone_id" required>
+                        <option value="">-- Pilih nomor pengirim --</option>
+                        ${phoneOptionsHtml()}
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="editNote">Catatan Perubahan (opsional)</label>
                     <input type="text" id="editNote" name="updated_note" placeholder="e.g. Update IP whitelist" />
                 </div>
@@ -296,10 +324,11 @@ export class AppKeyController {
     </dialog>
 
     <script>
-        function openEdit(id, mode, ips, app) {
+        function openEdit(id, mode, ips, app, waPhoneId) {
             document.getElementById('editAppName').textContent = app || '-';
             document.getElementById('editMode').value = mode;
             document.getElementById('editIps').value = ips || '';
+            document.getElementById('editWaPhoneId').value = waPhoneId || '';
             document.getElementById('editNote').value = '';
             document.getElementById('editForm').action = '/app-keys/' + id + '/edit';
             document.getElementById('editModal').showModal();
@@ -321,6 +350,7 @@ export class AppKeyController {
             app: body.app,
             mode: body.mode === 'PROD' ? 'PROD' : 'DEV',
             ips: body.ips || undefined,
+            wa_phone_id: body.wa_phone_id || undefined,
             created_by: this.currentUser(req),
         });
         return res.redirect('/app-keys?msg=created');
@@ -331,6 +361,7 @@ export class AppKeyController {
         await this.appKeyService.update(Number(id), {
             mode: body.mode === 'PROD' ? 'PROD' : 'DEV',
             ips: body.ips || undefined,
+            wa_phone_id: body.wa_phone_id || undefined,
             updated_by: this.currentUser(req),
             updated_note: body.updated_note || undefined,
         });

@@ -19,6 +19,7 @@ export class AppKeyService {
                 'key',
                 'mode',
                 'ips',
+                'wa_phone_id',
                 'is_active',
                 'created_by',
                 'created_at',
@@ -45,6 +46,7 @@ export class AppKeyService {
         app: string;
         mode: 'DEV' | 'PROD';
         ips?: string;
+        wa_phone_id?: string;
         created_by: string;
     }) {
         return this.db
@@ -54,6 +56,7 @@ export class AppKeyService {
                 key: uuidv7(),
                 mode: data.mode,
                 ips: data.ips || null,
+                wa_phone_id: data.wa_phone_id || null,
                 is_active: 'Y',
                 created_by: data.created_by,
             })
@@ -65,6 +68,7 @@ export class AppKeyService {
         data: {
             mode: 'DEV' | 'PROD';
             ips?: string;
+            wa_phone_id?: string;
             updated_by: string;
             updated_note?: string;
         },
@@ -74,6 +78,7 @@ export class AppKeyService {
             .set({
                 mode: data.mode,
                 ips: data.ips || null,
+                wa_phone_id: data.wa_phone_id || null,
                 updated_by: data.updated_by,
                 updated_at: new Date(),
                 updated_note: data.updated_note || null,

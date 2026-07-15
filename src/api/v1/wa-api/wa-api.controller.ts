@@ -78,6 +78,7 @@ export class WaApiController {
             file,
             dev_mode: appKeyData.mode === 'DEV' ? 1 : 0,
             app: appKeyData.app,
+            wa_phone_id: appKeyData.wa_phone_id,
         })
 
         return {
@@ -147,6 +148,7 @@ export class WaApiController {
             file: mockFile, // Oper mockFile hasil konversi Base64
             dev_mode: appKeyData.mode === 'DEV' ? 1 : 0,
             app: appKeyData.app,
+            wa_phone_id: appKeyData.wa_phone_id,
         });
 
         return {
