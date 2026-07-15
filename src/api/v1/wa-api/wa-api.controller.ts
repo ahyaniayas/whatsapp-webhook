@@ -17,10 +17,13 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { WaApiService } from './wa-api.service';
+import { LoggerService } from 'src/logger/logger.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { navBar } from 'src/shared/html.util';
 import { memoryStorage } from 'multer';
 import type { Request, Response } from 'express';
+
+const VALID_LOG_STATUSES = ['requested', 'sent', 'delivered', 'read', 'failed'];
 
 @Controller('api/v1/wa-api')
 export class WaApiController {
@@ -28,6 +31,7 @@ export class WaApiController {
 
     constructor(
         private readonly waApiService: WaApiService,
+        private readonly loggerService: LoggerService,
     ) { }
 
     @Get('health')
@@ -348,5 +352,47 @@ export class WaApiController {
         // Atur header respon ke format HTML text
         res.setHeader('Content-Type', 'text/html');
         return res.send(html);
+    }
+
+    @Get('log')
+    async getLog(
+        @Headers('api-key') hApiKey: string,
+        @Headers('app-key') hAppKey: string,
+        @Query('wa_message_id') waMessageId: string,
+        @Query('date_from') dateFrom: string,
+        @Query('date_to') dateTo: string,
+        @Query('status') status: string,
+        @Query('limit') limit: number,
+        @Req() req: Request,
+    ) {
+        if (hApiKey !== this.apiKey) {
+            throw new UnauthorizedException('Invalid API Key');
+        }
+
+        if (!dateFrom || !dateTo) {
+            throw new HttpException('Parameter date_from dan date_to wajib diisi', 400);
+        }
+
+        if (status && !VALID_LOG_STATUSES.includes(status)) {
+            throw new HttpException(`Parameter status tidak valid. Nilai yang diperbolehkan: ${VALID_LOG_STATUSES.join(', ')}`, 400);
+        }
+
+        // validasi app access, appKeyData.app dipakai sebagai filter app yang wajib
+        const clientIp = this.waApiService.getCleanIp(req.ip);
+        const appKeyData = await this.waApiService.validateAppAccess(hAppKey, clientIp);
+
+        const rows = await this.loggerService.list({
+            app: appKeyData.app,
+            waMessageId,
+            dateFrom,
+            dateTo,
+            status,
+            limit: limit ? Number(limit) : undefined,
+        });
+
+        return {
+            success: true,
+            data: rows,
+        };
     }
 }

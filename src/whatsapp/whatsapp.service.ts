@@ -101,6 +101,10 @@ export class WhatsappService {
 
         const error = status?.errors?.[0];
 
+        // status update ('sent'/'delivered'/'read') dari webhook WA tidak membawa info app,
+        // jadi ambil dari log 'requested' sebelumnya yang punya wa_message_id sama
+        const app = await this.loggerService.findAppByMessageId(status.id);
+
         await this.loggerService.insertWebhookLog({
             webhook_object: rawBody?.object,
             webhook_field: changes?.field,
@@ -110,6 +114,8 @@ export class WhatsappService {
             to_number: status.recipient_id,
 
             message_status: status.status,
+
+            app,
 
             pricing_model: status?.pricing?.pricing_model,
             pricing_category: status?.pricing?.category,

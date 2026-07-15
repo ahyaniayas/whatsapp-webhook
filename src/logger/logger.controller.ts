@@ -20,6 +20,7 @@ export class LoggerController {
         @Res() res: Response,
     ) {
         // Mengambil data log dari service dengan parameter filter lengkap
+        if (limit > 1000) limit = 1000;
         const rows = await this.loggerService.list({ waMessageId, from, to, status, app, limit });
 
         const html = `

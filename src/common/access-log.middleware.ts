@@ -3,8 +3,8 @@ import type { Request, Response, NextFunction } from 'express';
 import { Kysely } from 'kysely';
 import { AuthService } from 'src/auth/auth.service';
 
-const SKIP_PATHS = new Set(['/api/v1/wa-api/health', '/favicon.svg']);
-const SKIP_PREFIXES = ['/access-log'];
+const SKIP_PATHS = new Set(['/favicon.svg', '/api/v1/wa-api/health', '/api/v1/wa-api/log']);
+const SKIP_PREFIXES = ['/access-log', '/logger'];
 
 const SENSITIVE_BODY_KEYS = new Set([
     'password', 'token', 'key', 'secret', 'api_key',
@@ -22,7 +22,7 @@ export class AccessLogMiddleware implements NestMiddleware {
     constructor(
         @Inject('KYSELY_CONNECTION') private readonly db: Kysely<any>,
         private readonly authService: AuthService,
-    ) {}
+    ) { }
 
     use(req: Request, res: Response, next: NextFunction): void {
         const path = req.originalUrl.split('?')[0];
@@ -40,7 +40,7 @@ export class AccessLogMiddleware implements NestMiddleware {
         };
 
         res.on('finish', () => {
-            this.insertLog(req, res, Date.now() - startMs, capturedJsonBody).catch(() => {});
+            this.insertLog(req, res, Date.now() - startMs, capturedJsonBody).catch(() => { });
         });
 
         next();

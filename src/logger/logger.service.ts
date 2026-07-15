@@ -35,7 +35,7 @@ export class LoggerService {
         }
     }
 
-    async list(params: { waMessageId?: string; from?: string; to?: string; status?: string; app: string; limit?: number }) {
+    async list(params: { waMessageId?: string; from?: string; to?: string; status?: string; app: string; dateFrom?: string; dateTo?: string; limit?: number }) {
         let query = this.db
             .selectFrom(`${this.tableLog} as log`)
             .select([
@@ -54,7 +54,7 @@ export class LoggerService {
                             'status', log.message_status,
                             'error_title', log.error_title,
                             'pricing_billable', log.pricing_billable,
-                            'created_at', log.created_at
+                            'created_at', to_char(log.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
                         ) order by log.id desc
                     )
                 `.as('statuses'),
@@ -64,12 +64,12 @@ export class LoggerService {
 
         // Di dalam method list() milik LoggerService:
         if (params.app) {
-            query = query.where('log.app', 'ilike', `%${params.app}%`);
+            query = query.where('log.app', '=', params.app);
         }
 
         // Tambahkan potongan filter ini di dalam logger.service.ts Anda
         if (params.waMessageId) {
-            query = query.where('log.wa_message_id', 'ilike', `%${params.waMessageId}%`);
+            query = query.where('log.wa_message_id', '=', params.waMessageId);
         }
 
         // filter from
@@ -80,6 +80,18 @@ export class LoggerService {
         // filter to
         if (params.to) {
             query = query.where('log.to_number', 'ilike', `%${params.to}%`);
+        }
+
+        // filter tanggal dari
+        if (params.dateFrom) {
+            query = query.where('log.created_at', '>=', new Date(params.dateFrom));
+        }
+
+        // filter tanggal sampai
+        if (params.dateTo) {
+            const end = new Date(params.dateTo);
+            end.setDate(end.getDate() + 1);
+            query = query.where('log.created_at', '<', end);
         }
 
         // filter status: data muncul jika salah satu riwayat log mengandung status yang dicari
@@ -96,9 +108,20 @@ export class LoggerService {
 
         // limit
         let limit = Number(params.limit) || 100;
-        if (limit > 1000) limit = 1000;
 
         return query.orderBy(sql`max(log.id)`, 'desc').limit(limit).execute();
+    }
+
+    async findAppByMessageId(waMessageId: string): Promise<string | null> {
+        const row = await this.db
+            .selectFrom(this.tableLog)
+            .select('app')
+            .where('wa_message_id', '=', waMessageId)
+            .where('app', 'is not', null)
+            .orderBy('id', 'asc')
+            .executeTakeFirst();
+
+        return row?.app ?? null;
     }
 
     async detail(
