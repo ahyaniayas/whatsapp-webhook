@@ -18,6 +18,7 @@ const SENSITIVE_HEADER_KEYS = new Set([
 @Injectable()
 export class AccessLogMiddleware implements NestMiddleware {
     private readonly table = 'logger.l02_access_log';
+    private readonly tableAppKey = 'sec.s01_app_key';
 
     constructor(
         @Inject('KYSELY_CONNECTION') private readonly db: Kysely<any>,
@@ -61,6 +62,20 @@ export class AccessLogMiddleware implements NestMiddleware {
         }
     }
 
+    private async getAppName(req: Request): Promise<string | null> {
+        const appKey = req.headers['app-key'] as string;
+        if (!appKey) return null;
+
+        const row = await this.db
+            .selectFrom(this.tableAppKey)
+            .select('app')
+            .where('key', '=', appKey)
+            .where('deleted_at', 'is', null)
+            .executeTakeFirst();
+
+        return row?.app ?? null;
+    }
+
     private sanitizeBody(body: any): Record<string, any> | null {
         if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
         const result: Record<string, any> = {};
@@ -95,7 +110,7 @@ export class AccessLogMiddleware implements NestMiddleware {
             }
 
             await this.db.insertInto(this.table).values({
-                app_name: (req.headers['app-key'] as string) || null,
+                app_name: await this.getAppName(req),
                 client_ip: this.getIp(req),
                 user_agent: (req.headers['user-agent'] as string) || null,
                 http_method: req.method,
