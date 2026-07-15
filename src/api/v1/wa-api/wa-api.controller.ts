@@ -71,7 +71,7 @@ export class WaApiController {
 
         // Langsung masukkan ke database tabel antrean
         await this.waApiService.createQueue({
-            phone,
+            phone: this.waApiService.normalizePhone(phone),
             nik,
             nama,
             periode,
@@ -140,7 +140,7 @@ export class WaApiController {
 
         // 7. Masukkan ke database tabel antrean menggunakan service yang sama
         await this.waApiService.createQueue({
-            phone,
+            phone: this.waApiService.normalizePhone(phone),
             nik,
             nama,
             periode,

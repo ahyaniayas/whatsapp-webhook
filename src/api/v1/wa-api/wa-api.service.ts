@@ -439,4 +439,22 @@ export class WaApiService {
 
         return cleanIp;
     }
+
+    normalizePhone(phone: string): string {
+        const cleanPhone = phone.replace(/\s+/g, '');
+
+        if (cleanPhone.startsWith('+62')) {
+            return '62' + cleanPhone.slice(3);
+        }
+
+        if (cleanPhone.startsWith('0')) {
+            return '62' + cleanPhone.slice(1);
+        }
+
+        if (cleanPhone.startsWith('62')) {
+            return cleanPhone;
+        }
+
+        return '62' + cleanPhone;
+    }
 }
