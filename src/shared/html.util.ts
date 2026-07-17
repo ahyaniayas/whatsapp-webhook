@@ -17,13 +17,31 @@ export function navBar(active: 'dashboard' | 'queue' | 'logger' | 'app-keys' | '
         .wa-nav-toggle-checkbox { display:none; }
         .wa-nav-toggle-label { display:none; }
         @media (max-width: 640px) {
-            .wa-nav { flex-wrap:wrap; height:auto; padding:0.625rem 1rem; overflow-x:visible; }
+            .wa-nav { padding:0 1rem; overflow-x:visible; }
             .wa-nav-brand { margin-right:auto; font-size:0.9375rem; }
-            .wa-nav-toggle-label { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; border:1px solid #e2e8f0; background:white; font-size:1.125rem; cursor:pointer; color:#475569; flex-shrink:0; order:2; }
-            .wa-nav-links { display:none; flex-direction:column; align-items:stretch; width:100%; order:3; margin-top:0.625rem; gap:0.125rem; }
+            .wa-nav-toggle-label { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; border:1px solid #e2e8f0; background:white; font-size:1rem; cursor:pointer; color:#475569; flex-shrink:0; transition:all 0.15s; }
+            .wa-nav-toggle-checkbox:checked ~ .wa-nav-toggle-label { background:#f0fdf4; border-color:#bbf7d0; color:#10b981; }
+
+            .wa-nav-links {
+                display:none;
+                flex-direction:column;
+                align-items:stretch;
+                gap:0.125rem;
+                position:absolute;
+                top:calc(100% + 0.5rem);
+                left:0.75rem;
+                right:0.75rem;
+                background:white;
+                border:1px solid #e2e8f0;
+                border-radius:12px;
+                box-shadow:0 12px 28px rgba(0,0,0,0.12);
+                padding:0.5rem;
+                z-index:99;
+            }
             .wa-nav-toggle-checkbox:checked ~ .wa-nav-links { display:flex; }
-            .wa-nav-link { width:100%; }
-            .wa-nav-logout { margin-left:0; width:100%; text-align:center; margin-top:0.25rem; }
+            .wa-nav-link { width:100%; padding:0.625rem 0.75rem; }
+            .wa-nav-link:active { background:#f8fafc; }
+            .wa-nav-logout { margin-left:0; width:100%; text-align:center; margin-top:0.375rem; padding-top:0.75rem; border:none; border-top:1px solid #f1f5f9; border-radius:0; }
         }
     </style>
     <nav class="wa-nav">
