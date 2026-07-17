@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { v7 as uuidv7 } from 'uuid';
 import { WaApiService } from 'src/api/v1/wa-api/wa-api.service';
+import { LoggerService } from 'src/logger/logger.service';
 import { getWaPhoneNumbers } from 'src/shared/wa-phone-numbers.util';
 
 type MfaStatus = 'PENDING_WA' | 'PENDING_CLICK' | 'CONFIRMED';
@@ -27,7 +28,17 @@ export class MfaService {
 
     private readonly sessions = new Map<string, PendingMfaSession>();
 
-    constructor(private readonly waApiService: WaApiService) {}
+    constructor(
+        private readonly waApiService: WaApiService,
+        private readonly loggerService: LoggerService,
+    ) {}
+
+    private async logInboundError(waMessageId: string | undefined, reason: string): Promise<void> {
+        await this.loggerService.insertWebhookLog({
+            wa_message_id: waMessageId,
+            error_message: reason,
+        });
+    }
 
     private getAdminNumbers(): string[] {
         try {
@@ -126,20 +137,34 @@ export class MfaService {
 
     /**
      * Dipanggil dari webhook WA setiap ada pesan masuk bertipe text.
-     * Diam-diam abaikan (tanpa balasan) jika pengirim tidak di-allowlist atau kode tidak cocok,
-     * supaya tidak memberi sinyal ke nomor yang bukan admin.
+     * Deteksi dulu apakah pesan ini berbentuk permintaan OTP (ada kode 6 digit) - kalau bukan,
+     * abaikan diam-diam tanpa jejak apapun karena ini cuma pesan WA biasa, bukan urusan MFA.
+     * Begitu terdeteksi sebagai permintaan OTP, baru validasi nomor pengirim, dan setiap error
+     * setelah titik itu dicatat ke logger dengan wa_message_id = pesan yang diterima ini.
      */
-    async handleInboundReply(from: string | undefined, text: string | undefined): Promise<void> {
+    async handleInboundReply(
+        from: string | undefined,
+        text: string | undefined,
+        waMessageId: string | undefined,
+    ): Promise<void> {
         if (!from || !text) return;
-
-        const normalizedFrom = this.waApiService.normalizePhone(from);
-        if (!this.getAdminNumbers().includes(normalizedFrom)) return;
 
         const match = text.match(/\b(\d{6})\b/);
         if (!match) return;
 
-        const session = this.findByCode(match[1]);
-        if (!session) return;
+        const otpCode = match[1];
+
+        const normalizedFrom = this.waApiService.normalizePhone(from);
+        if (!this.getAdminNumbers().includes(normalizedFrom)) {
+            await this.logInboundError(waMessageId, `Nomor pengirim ${from} tidak terdaftar di ADMIN_NUMBERS`);
+            return;
+        }
+
+        const session = this.findByCode(otpCode);
+        if (!session) {
+            await this.logInboundError(waMessageId, `Kode OTP dari ${from} tidak ditemukan atau sudah kedaluwarsa`);
+            return;
+        }
 
         const magicToken = crypto.randomBytes(32).toString('base64url');
         const previousExpiresAt = session.expiresAt;
@@ -153,6 +178,7 @@ export class MfaService {
 
         if (!waPhoneId) {
             this.logger.error('ADMIN_MAIN_NUMBER tidak ditemukan di WA_PHONE_NUMBERS, tidak bisa kirim link OTP');
+            await this.logInboundError(waMessageId, `ADMIN_MAIN_NUMBER tidak ditemukan di WA_PHONE_NUMBERS (pesan dari ${from})`);
             session.status = 'PENDING_WA';
             session.magicToken = null;
             session.expiresAt = previousExpiresAt;
@@ -169,6 +195,7 @@ export class MfaService {
             });
         } catch (err) {
             this.logger.error(`Gagal mengirim link OTP: ${err?.message}`, err?.stack);
+            await this.logInboundError(waMessageId, `Gagal mengirim link OTP ke ${from}: ${err?.message}`);
             session.status = 'PENDING_WA';
             session.magicToken = null;
             session.expiresAt = previousExpiresAt;

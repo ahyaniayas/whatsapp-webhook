@@ -93,7 +93,7 @@ export class WhatsappService {
 
         if (type === 'text') {
             try {
-                await this.mfaService.handleInboundReply(from, message?.text?.body);
+                await this.mfaService.handleInboundReply(from, message?.text?.body, message.id);
             } catch (err) {
                 this.logger.error(`MFA inbound handling failed: ${err?.message}`, err?.stack);
             }

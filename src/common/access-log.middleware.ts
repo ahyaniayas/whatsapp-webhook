@@ -3,7 +3,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { Kysely } from 'kysely';
 import { AuthService } from 'src/auth/auth.service';
 
-const SKIP_PATHS = new Set(['/favicon.svg', '/api/v1/wa-api/health']);
+const SKIP_PATHS = new Set(['/favicon.svg', '/api/v1/wa-api/health', '/mfa/status']);
 const SKIP_PREFIXES = ['/access-log', '/logger'];
 
 const SENSITIVE_BODY_KEYS = new Set([
