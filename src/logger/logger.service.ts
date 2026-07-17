@@ -36,6 +36,10 @@ export class LoggerService {
     }
 
     async list(params: { waMessageId?: string; from?: string; to?: string; status?: string; app: string; dateFrom?: string; dateTo?: string; limit?: number }) {
+        // Ambil timezone session DB saat ini agar konversi ke UTC mengikuti konfigurasi server, bukan hardcode
+        const tzResult = await sql<{ tz: string }>`select current_setting('TIMEZONE') as tz`.execute(this.db);
+        const dbTimezone = tzResult.rows[0]?.tz ?? 'UTC';
+
         let query = this.db
             .selectFrom(`${this.tableLog} as log`)
             .select([
@@ -54,11 +58,11 @@ export class LoggerService {
                             'status', log.message_status,
                             'error_title', log.error_title,
                             'pricing_billable', log.pricing_billable,
-                            'created_at', to_char(log.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
+                            'created_at', to_char(log.created_at AT TIME ZONE ${dbTimezone} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
                         ) order by log.id desc
                     )
                 `.as('statuses'),
-                sql<string>`max(log.created_at)`.as('created_at'),
+                sql<string>`to_char(max(log.created_at) AT TIME ZONE ${dbTimezone} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')`.as('created_at'),
             ])
             .groupBy('log.wa_message_id'); // Murni grouping berdasarkan 1 Message ID saja
 
