@@ -36,6 +36,7 @@ export class MfaService {
     private async logInboundError(waMessageId: string | undefined, reason: string): Promise<void> {
         await this.loggerService.insertWebhookLog({
             wa_message_id: waMessageId,
+            message_status: 'failed',
             error_message: reason,
         });
     }
