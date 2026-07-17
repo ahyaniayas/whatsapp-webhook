@@ -278,6 +278,7 @@ export class LoggerController {
             <style>
                 * { box-sizing: border-box; margin: 0; padding: 0; }
                 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; color: #1e293b; }
+                .container { overflow-x: hidden; }
 
                 .header-wrapper { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
                 h1 { font-size: 1.75rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 0.5rem; }
@@ -288,9 +289,10 @@ export class LoggerController {
                 .btn-back:hover { background: #f1f5f9; color: #1e293b; border-color: #94a3b8; }
                 
                 /* Card Detail */
-                .card { background: white; padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-                .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #f1f5f9; }
+                .card { background: white; padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; min-width: 0; overflow-wrap: anywhere; }
+                .card-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #f1f5f9; }
                 .card-meta { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; font-size: 0.875rem; }
+                .card-meta p { word-break: break-word; }
                 
                 /* Badge Status Utilities */
                 .badge { padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; color: white; text-transform: uppercase; display: inline-block; letter-spacing: 0.02em; }
@@ -303,10 +305,10 @@ export class LoggerController {
                 .app-badge { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; text-transform: none; font-family: monospace; display: inline-block; width: fit-content; }
                 
                 /* JSON Viewer Code block */
-                pre { background: #0f172a; color: #e2e8f0; padding: 1.25rem; border-radius: 8px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; line-height: 1.5; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
+                pre { background: #0f172a; color: #e2e8f0; padding: 1.25rem; border-radius: 8px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; line-height: 1.5; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); white-space: pre-wrap; word-break: break-all; max-width: 100%; }
                 .text-muted { color: #94a3b8; }
                 .text-danger { color: #b91c1c; font-weight: 500; }
-                .font-mono { font-family: monospace; font-size: 0.9rem; }
+                .font-mono { font-family: monospace; font-size: 0.9rem; word-break: break-all; }
 
                 @media (max-width: 640px) {
                     .container { padding: 1rem !important; }

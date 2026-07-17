@@ -268,15 +268,16 @@ export class AccessLogController {
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f8fafc; color: #1e293b; }
-        main { padding: 2rem; max-width: 1100px; }
-        .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-        h1 { font-size: 1.5rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 0.5rem; }
+        main { padding: 2rem; max-width: 1100px; overflow-x: hidden; }
+        .page-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 1.5rem; }
+        h1 { font-size: 1.5rem; font-weight: 700; color: #0f172a; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0; }
         h1::before { content: ""; display: inline-block; width: 8px; height: 24px; background: #8b5cf6; border-radius: 4px; }
+        h1 span { word-break: break-all; }
         .btn-back { display: inline-flex; align-items: center; padding: 0.5rem 1rem; background: white; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; font-weight: 600; text-decoration: none; }
         .btn-back:hover { background: #f1f5f9; }
 
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
-        .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); min-width: 0; }
         .card.full { grid-column: 1 / -1; }
         .card-title { font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
         .info-row { display: flex; gap: 0.75rem; margin-bottom: 0.625rem; font-size: 0.875rem; }
@@ -299,9 +300,9 @@ export class AccessLogController {
         .time-mid  { color: #b45309; font-weight: 600; }
         .time-slow { color: #b91c1c; font-weight: 600; }
 
-        .json-block { background: #0f172a; color: #e2e8f0; padding: 1rem 1.25rem; border-radius: 8px; overflow-x: auto; font-family: monospace; font-size: 0.8rem; line-height: 1.6; margin-top: 0.5rem; max-height: 360px; overflow-y: auto; }
+        .json-block { background: #0f172a; color: #e2e8f0; padding: 1rem 1.25rem; border-radius: 8px; overflow-x: auto; font-family: monospace; font-size: 0.8rem; line-height: 1.6; margin-top: 0.5rem; max-height: 360px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; max-width: 100%; }
         .text-muted { color: #94a3b8; }
-        .font-mono { font-family: monospace; }
+        .font-mono { font-family: monospace; word-break: break-all; }
         .error-text { color: #b91c1c; font-size: 0.875rem; }
 
         @media (max-width: 700px) {
