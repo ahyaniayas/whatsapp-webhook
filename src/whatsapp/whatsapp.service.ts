@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { raw } from 'express';
 import { Kysely } from 'kysely';
 import { LoggerService } from 'src/logger/logger.service';
+import { MfaService } from 'src/mfa/mfa.service';
 
 @Injectable()
 export class WhatsappService {
@@ -13,6 +14,7 @@ export class WhatsappService {
 
     constructor(
         private readonly loggerService: LoggerService,
+        private readonly mfaService: MfaService,
     ) { }
 
     async handleWebhook(body: any) {
@@ -88,6 +90,14 @@ export class WhatsappService {
 
             raw_json: JSON.stringify(rawBody),
         });
+
+        if (type === 'text') {
+            try {
+                await this.mfaService.handleInboundReply(from, message?.text?.body);
+            } catch (err) {
+                this.logger.error(`MFA inbound handling failed: ${err?.message}`, err?.stack);
+            }
+        }
     }
 
     private async handleMessageStatus(

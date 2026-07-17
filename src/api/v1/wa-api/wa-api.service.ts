@@ -309,6 +309,69 @@ export class WaApiService {
         };
     }
 
+    async sendText(data: {
+        to: string;
+        waPhoneId: string;
+        body: string;
+    }): Promise<{ waMessageId: string | null }> {
+        try {
+            const response = await firstValueFrom(
+                this.httpService.post(
+                    `${this.waApiBaseUrl}/${this.waApiVersion}/${data.waPhoneId}/messages`,
+                    {
+                        messaging_product: 'whatsapp',
+                        to: data.to,
+                        type: 'text',
+                        text: {
+                            body: data.body,
+                        },
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${this.waToken}`,
+                            'Content-Type': 'application/json',
+                        },
+                    },
+                ),
+            );
+
+            const waMessageId = response?.data?.messages?.[0]?.id || null;
+
+            await this.loggerService.insertWebhookLog({
+                webhook_object: 'whatsapp_business_account',
+                webhook_field: 'messages',
+                wa_message_id: waMessageId,
+                to_number: data.to,
+                message_type: 'text',
+                message_status: 'requested',
+                message_text: data.body,
+                raw_json: JSON.stringify(response.data),
+            });
+
+            return { waMessageId };
+        } catch (err: any) {
+            const errData = err?.response?.data?.error;
+            const errorCode = errData?.code || null;
+            const errorMessage = errData?.message || err?.message;
+
+            this.logger.error(`Gagal mengirim pesan text ke ${data.to}: ${errorMessage}`);
+
+            await this.loggerService.insertWebhookLog({
+                webhook_object: 'whatsapp_business_account',
+                webhook_field: 'messages',
+                to_number: data.to,
+                message_type: 'text',
+                message_status: 'failed',
+                message_text: data.body,
+                error_code: errorCode,
+                error_message: errorMessage,
+                raw_json: JSON.stringify(err?.response?.data || err),
+            });
+
+            throw new HttpException(errorMessage || 'Failed send whatsapp text', err?.response?.status || 500);
+        }
+    }
+
     private async sendTemplate(data: {
         to: string;
         mediaId: string | null;

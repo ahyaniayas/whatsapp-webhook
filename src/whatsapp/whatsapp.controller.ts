@@ -16,7 +16,7 @@ import { WhatsappService } from './whatsapp.service';
 
 @Controller('webhook/whatsapp')
 export class WhatsappController {
-    private readonly verifyToken = process.env.WEBHOOK_API_KEY;
+    private readonly verifyToken = process.env.WEBHOOK_TOKEN;
     private readonly logger = new Logger(WhatsappController.name);
 
     constructor(

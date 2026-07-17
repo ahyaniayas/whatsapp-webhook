@@ -1,10 +1,14 @@
 import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { MfaService } from 'src/mfa/mfa.service';
 import type { Request, Response } from 'express';
 
 @Controller()
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+    constructor(
+        private readonly authService: AuthService,
+        private readonly mfaService: MfaService,
+    ) {}
 
     private getIp(req: Request): string {
         const raw = req.ip || '';
@@ -87,6 +91,7 @@ export class AuthController {
             </div>
             <button type="submit" class="btn" id="submitBtn" ${isLocked ? 'disabled' : ''}>Masuk</button>
         </form>
+        <a href="/mfa/start" style="display:block; text-align:center; margin-top:1.125rem; font-size:0.8125rem; color:#059669; font-weight:600; text-decoration:none;">Masuk dengan WhatsApp</a>
     </div>
     <script>
         const wait = ${waitSeconds};
@@ -124,9 +129,14 @@ export class AuthController {
 
         if (this.authService.validate(body.username, body.password)) {
             this.authService.resetAttempts(ip);
-            const token = this.authService.createToken(body.username);
-            res.cookie('_wa_admin', token, { httpOnly: true, sameSite: 'lax', path: '/' });
-            return res.redirect('/dashboard');
+            const session = this.mfaService.createPendingSession(body.username);
+            res.cookie('_mfa_pending', session.sessionId, {
+                httpOnly: true,
+                sameSite: 'lax',
+                path: '/',
+                maxAge: 10 * 60 * 1000,
+            });
+            return res.redirect('/mfa/verify');
         }
 
         const result = this.authService.recordFailure(ip);

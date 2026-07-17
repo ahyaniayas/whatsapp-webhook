@@ -93,13 +93,36 @@ export class AccessLogMiddleware implements NestMiddleware {
         return result;
     }
 
+    private sanitizeQuery(query: Record<string, any>): Record<string, any> {
+        const result: Record<string, any> = {};
+        for (const [k, v] of Object.entries(query)) {
+            result[k] = SENSITIVE_BODY_KEYS.has(k.toLowerCase()) ? '[REDACTED]' : v;
+        }
+        return result;
+    }
+
+    private sanitizeEndpoint(req: Request): string {
+        const [path, queryString] = (req.originalUrl || req.path).split('?');
+        if (!queryString) return path;
+
+        const params = new URLSearchParams(queryString);
+        for (const key of params.keys()) {
+            if (SENSITIVE_BODY_KEYS.has(key.toLowerCase())) {
+                params.set(key, '[REDACTED]');
+            }
+        }
+        return `${path}?${params.toString()}`;
+    }
+
     private async insertLog(req: Request, res: Response, responseTimeMs: number, responseBody: any): Promise<void> {
         try {
             const isMultipart = (req.headers['content-type'] || '').includes('multipart/form-data');
 
             const sanitizedBody = isMultipart ? null : this.sanitizeBody(req.body);
             const sanitizedHeaders = this.sanitizeHeaders(req.headers as Record<string, any>);
-            const queryParams = Object.keys(req.query).length > 0 ? req.query : null;
+            const queryParams = Object.keys(req.query).length > 0
+                ? this.sanitizeQuery(req.query as Record<string, any>)
+                : null;
 
             const statusCode = res.statusCode;
 
@@ -114,7 +137,7 @@ export class AccessLogMiddleware implements NestMiddleware {
                 client_ip: this.getIp(req),
                 user_agent: (req.headers['user-agent'] as string) || null,
                 http_method: req.method,
-                endpoint: req.originalUrl || req.path,
+                endpoint: this.sanitizeEndpoint(req),
                 request_headers: JSON.stringify(sanitizedHeaders),
                 query_params: queryParams ? JSON.stringify(queryParams) : null,
                 request_body: sanitizedBody ? JSON.stringify(sanitizedBody) : null,

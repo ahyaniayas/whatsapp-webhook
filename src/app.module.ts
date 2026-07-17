@@ -12,6 +12,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { AppKeyModule } from './app-key/app-key.module';
 import { AccessLogMiddleware } from './common/access-log.middleware';
 import { AccessLogModule } from './access-log/access-log.module';
+import { MfaModule } from './mfa/mfa.module';
 
 const isSchedulerEnabled = process.env.WA_SCHEDULER === 'true';
 const schedulerModules = isSchedulerEnabled ? [ScheduleModule.forRoot()] : [];
@@ -30,6 +31,7 @@ const schedulerModules = isSchedulerEnabled ? [ScheduleModule.forRoot()] : [];
     WhatsappModule,
     WaApiModule,
     LoggerModule,
+    MfaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
