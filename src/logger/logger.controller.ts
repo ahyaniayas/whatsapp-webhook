@@ -88,6 +88,14 @@ export class LoggerController {
                 .btn-action { display: inline-block; padding: 0.375rem 0.75rem; background: #6366f1; color: white; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-decoration: none; transition: background 0.2s; white-space: nowrap; }
                 .btn-action:hover { background: #4f46e5; }
                 .btn-disabled { display: inline-block; padding: 0.375rem 0.75rem; background: #e2e8f0; color: #94a3b8; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: not-allowed; text-decoration: none; white-space: nowrap; }
+
+                @media (max-width: 640px) {
+                    .container { padding: 1rem !important; }
+                    h1 { font-size: 1.375rem; }
+                    form { gap: 0.625rem; padding: 1rem; }
+                    .form-group { min-width: 100%; }
+                    button[type="submit"] { width: 100%; align-self: stretch; margin-top: 0.25rem; }
+                }
             </style>
         </head>
         <body>
@@ -208,7 +216,7 @@ export class LoggerController {
 
             // Tombol aksi pembuka tab baru yang aman
             const actionButton = row.wa_message_id
-                ? `<a href="/logger/${row.wa_message_id}" class="btn-action" rel="noopener noreferrer">Lihat Log</a>`
+                ? `<a href="/logger/${row.wa_message_id}" class="btn-action" rel="noopener noreferrer">Detail</a>`
                 : `<span class="btn-disabled" title="Data log tidak valid/Message ID kosong">Lihat Log</span>`;
 
             return `
@@ -299,6 +307,12 @@ export class LoggerController {
                 .text-muted { color: #94a3b8; }
                 .text-danger { color: #b91c1c; font-weight: 500; }
                 .font-mono { font-family: monospace; font-size: 0.9rem; }
+
+                @media (max-width: 640px) {
+                    .container { padding: 1rem !important; }
+                    .header-wrapper { flex-wrap: wrap; gap: 0.75rem; }
+                    h1 { font-size: 1.375rem; }
+                }
             </style>
         </head>
         <body>
@@ -306,7 +320,7 @@ export class LoggerController {
             <div class="container" style="padding:2rem;">
                 <div class="header-wrapper">
                     <h1>WhatsApp Message Logger - Detail</h1>
-                    <a href="/logger" class="btn-back">&larr; Back to Dashboard</a>
+                    <a href="/logger" class="btn-back">&larr; Kembali</a>
                 </div>
 
                 ${rows.length === 0 ? `<div class="card"><p class="text-muted" style="text-align: center;">Data detail log tidak ditemukan.</p></div>` : ''}

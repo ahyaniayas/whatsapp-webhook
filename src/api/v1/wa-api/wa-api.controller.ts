@@ -230,6 +230,14 @@ export class WaApiController {
                 .btn-action { display: inline-block; padding: 0.375rem 0.75rem; background: #6366f1; color: white; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-decoration: none; transition: background 0.2s; }
                 .btn-action:hover { background: #4f46e5; }
                 .btn-disabled { display: inline-block; padding: 0.375rem 0.75rem; background: #e2e8f0; color: #94a3b8; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: not-allowed; text-decoration: none; }
+
+                @media (max-width: 640px) {
+                    .container { padding: 1rem !important; }
+                    h1 { font-size: 1.375rem; }
+                    form { gap: 0.625rem; padding: 1rem; }
+                    .form-group { min-width: 100%; }
+                    button[type="submit"] { width: 100%; align-self: stretch; margin-top: 0.25rem; }
+                }
             </style>
         </head>
         <body>

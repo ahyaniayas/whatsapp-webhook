@@ -146,6 +146,13 @@ export class AccessLogController {
         .text-muted { color: #94a3b8; }
         .btn-detail { display: inline-block; padding: 0.25rem 0.625rem; background: #f3e8ff; color: #6d28d9; border-radius: 5px; font-size: 0.75rem; font-weight: 600; text-decoration: none; }
         .btn-detail:hover { background: #e9d5ff; }
+
+        @media (max-width: 640px) {
+            main { padding: 1rem; }
+            h1 { font-size: 1.375rem; }
+            .fg { min-width: 100%; max-width: none !important; }
+            .btn-filter, .btn-reset { width: 100%; justify-content: center; }
+        }
     </style>
 </head>
 <body>
@@ -297,7 +304,14 @@ export class AccessLogController {
         .font-mono { font-family: monospace; }
         .error-text { color: #b91c1c; font-size: 0.875rem; }
 
-        @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } .card.full { grid-column: 1; } }
+        @media (max-width: 700px) {
+            main { padding: 1rem; }
+            .grid { grid-template-columns: 1fr; }
+            .card.full { grid-column: 1; }
+            .page-header { flex-wrap: wrap; gap: 0.75rem; }
+            .info-row { flex-direction: column; gap: 0.125rem; }
+            .info-label { min-width: 0; }
+        }
     </style>
 </head>
 <body>

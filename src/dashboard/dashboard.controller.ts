@@ -36,6 +36,11 @@ export class DashboardController {
         .card-link.indigo { color: #6366f1; }
         .card-link.amber { color: #f59e0b; }
         .card-link.violet { color: #8b5cf6; }
+
+        @media (max-width: 640px) {
+            main { padding: 1rem; }
+            .page-title { font-size: 1.5rem; }
+        }
     </style>
 </head>
 <body>
@@ -52,14 +57,6 @@ export class DashboardController {
                 </div>
                 <div class="card-link green">Buka Queue &rarr;</div>
             </a>
-            <a href="/logger" class="card">
-                <div class="card-icon indigo">📝</div>
-                <div>
-                    <div class="card-title">Logger</div>
-                    <div class="card-desc">Lihat log webhook pesan WhatsApp termasuk status pengiriman, riwayat status, dan detail pesan.</div>
-                </div>
-                <div class="card-link indigo">Buka Logger &rarr;</div>
-            </a>
             <a href="/app-keys" class="card">
                 <div class="card-icon amber">🔑</div>
                 <div>
@@ -67,6 +64,14 @@ export class DashboardController {
                     <div class="card-desc">Kelola API key dan whitelist IP address untuk setiap aplikasi klien yang mengakses gateway ini.</div>
                 </div>
                 <div class="card-link amber">Kelola App Keys &rarr;</div>
+            </a>
+            <a href="/logger" class="card">
+                <div class="card-icon indigo">📝</div>
+                <div>
+                    <div class="card-title">Logger</div>
+                    <div class="card-desc">Lihat log webhook pesan WhatsApp termasuk status pengiriman, riwayat status, dan detail pesan.</div>
+                </div>
+                <div class="card-link indigo">Buka Logger &rarr;</div>
             </a>
             <a href="/access-log" class="card">
                 <div class="card-icon violet">📊</div>

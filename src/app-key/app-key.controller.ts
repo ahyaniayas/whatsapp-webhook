@@ -173,6 +173,15 @@ export class AppKeyController {
         .dialog-hint { font-size: 0.8rem; color: #94a3b8; }
         .dialog-hint code { background: #f1f5f9; padding: 0.1rem 0.35rem; border-radius: 4px; font-family: monospace; color: #64748b; }
         .dialog-footer { padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 0.75rem; }
+
+        @media (max-width: 640px) {
+            main { padding: 1rem; }
+            h1 { font-size: 1.375rem; }
+            .page-header { flex-wrap: wrap; gap: 0.75rem; }
+            .filter-group { min-width: 100%; max-width: none !important; }
+            .btn-filter, .btn-reset { width: 100%; justify-content: center; }
+            .btn-action { display: inline-block; margin: 0 0.25rem 0.375rem 0; }
+        }
     </style>
 </head>
 <body>

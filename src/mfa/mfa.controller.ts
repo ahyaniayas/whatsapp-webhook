@@ -123,6 +123,52 @@ export class MfaController {
         }
 
         this.issueSessionCookie(res, session.username);
-        return res.redirect('/dashboard');
+
+        // Tab ini dibuka dari WhatsApp; tab login aslinya sudah otomatis masuk lewat polling /mfa/status,
+        // jadi tab ini cukup konfirmasi lalu tutup sendiri, tidak perlu redirect ke /dashboard.
+        const html = `<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Berhasil - WhatsApp Admin</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f1f5f9; color: #1e293b; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1rem; }
+        .card { background: white; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 2.5rem; width: 100%; max-width: 400px; text-align: center; }
+        .logo-circle { width: 60px; height: 60px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem; font-size: 1.75rem; }
+        h1 { font-size: 1.375rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
+        p { font-size: 0.875rem; color: #64748b; line-height: 1.5; margin-bottom: 0.5rem; }
+        .status { margin-top: 1.25rem; font-size: 0.8125rem; color: #94a3b8; }
+        .btn { display: inline-block; margin-top: 1.25rem; padding: 0.8125rem 1.5rem; background: #10b981; color: white; border: none; border-radius: 8px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; text-decoration: none; }
+        .btn:hover { background: #059669; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo-circle">✅</div>
+        <h1>Login berhasil</h1>
+        <p>Silakan kembali ke tab tempat Anda login. Tab ini akan tertutup otomatis dalam <strong id="countdown">5</strong> detik.</p>
+        <div class="status" id="statusText">Jika tab tidak tertutup otomatis, Anda bisa menutupnya secara manual.</div>
+        <a class="btn" href="/dashboard">Buka Dashboard di tab ini</a>
+    </div>
+    <script>
+        let secs = 5;
+        const countEl = document.getElementById('countdown');
+        const tick = setInterval(() => {
+            secs--;
+            if (countEl) countEl.textContent = secs;
+            if (secs <= 0) {
+                clearInterval(tick);
+                window.close();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>`;
+
+        res.setHeader('Content-Type', 'text/html');
+        return res.send(html);
     }
 }
