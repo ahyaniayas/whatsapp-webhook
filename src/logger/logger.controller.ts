@@ -89,12 +89,22 @@ export class LoggerController {
                 .btn-action:hover { background: #4f46e5; }
                 .btn-disabled { display: inline-block; padding: 0.375rem 0.75rem; background: #e2e8f0; color: #94a3b8; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: not-allowed; text-decoration: none; white-space: nowrap; }
 
+                /* Filter collapse (mobile only) */
+                .filter-toggle-checkbox { display: none; }
+                .filter-toggle-label { display: none; }
+
                 @media (max-width: 640px) {
                     .container { padding: 1rem !important; }
                     h1 { font-size: 1.375rem; }
                     form { gap: 0.625rem; padding: 1rem; }
                     .form-group { min-width: 100%; }
                     button[type="submit"] { width: 100%; align-self: stretch; margin-top: 0.25rem; }
+
+                    .filter-toggle-label { display: flex; align-items: center; justify-content: space-between; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.875rem 1.25rem; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.875rem; color: #334155; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+                    .filter-toggle-label .chev { transition: transform 0.2s; }
+                    .filter-toggle-checkbox:checked ~ .filter-toggle-label .chev { transform: rotate(180deg); }
+                    form { display: none; }
+                    .filter-toggle-checkbox:checked ~ form { display: flex; }
                 }
             </style>
         </head>
@@ -102,7 +112,9 @@ export class LoggerController {
             ${navBar('logger')}
             <div class="container" style="padding:2rem;">
                 <h1>WhatsApp Message Logger</h1>
-                
+
+                <input type="checkbox" id="filterToggle" class="filter-toggle-checkbox" />
+                <label for="filterToggle" class="filter-toggle-label">Filter <span class="chev">&#9662;</span></label>
                 <form method="GET">
                     <div class="form-group">
                         <label>Message ID</label>

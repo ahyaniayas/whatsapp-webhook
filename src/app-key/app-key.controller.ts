@@ -174,6 +174,10 @@ export class AppKeyController {
         .dialog-hint code { background: #f1f5f9; padding: 0.1rem 0.35rem; border-radius: 4px; font-family: monospace; color: #64748b; }
         .dialog-footer { padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 0.75rem; }
 
+        /* Filter collapse (mobile only) */
+        .filter-toggle-checkbox { display: none; }
+        .filter-toggle-label { display: none; }
+
         @media (max-width: 640px) {
             main { padding: 1rem; }
             h1 { font-size: 1.375rem; }
@@ -181,6 +185,12 @@ export class AppKeyController {
             .filter-group { min-width: 100%; max-width: none !important; }
             .btn-filter, .btn-reset { width: 100%; justify-content: center; }
             .btn-action { display: inline-block; margin: 0 0.25rem 0.375rem 0; }
+
+            .filter-toggle-label { display: flex; align-items: center; justify-content: space-between; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.875rem 1.25rem; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.875rem; color: #334155; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+            .filter-toggle-label .chev { transition: transform 0.2s; }
+            .filter-toggle-checkbox:checked ~ .filter-toggle-label .chev { transform: rotate(180deg); }
+            .filter-form { display: none; }
+            .filter-toggle-checkbox:checked ~ .filter-form { display: flex; }
         }
     </style>
 </head>
@@ -198,6 +208,8 @@ export class AppKeyController {
         ${msg === 'deleted' ? '<div class="alert alert-success">&#10003; App Key berhasil dihapus.</div>' : ''}
         ${msg === 'regen'   ? '<div class="alert alert-success">&#10003; Key berhasil diregenerasi.</div>' : ''}
 
+        <input type="checkbox" id="filterToggle" class="filter-toggle-checkbox" />
+        <label for="filterToggle" class="filter-toggle-label">Filter <span class="chev">&#9662;</span></label>
         <form class="filter-form" method="GET" action="/app-keys">
             <div class="filter-group">
                 <span class="filter-label">Nama Aplikasi</span>

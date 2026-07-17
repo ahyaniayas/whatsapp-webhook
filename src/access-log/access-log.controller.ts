@@ -147,11 +147,21 @@ export class AccessLogController {
         .btn-detail { display: inline-block; padding: 0.25rem 0.625rem; background: #f3e8ff; color: #6d28d9; border-radius: 5px; font-size: 0.75rem; font-weight: 600; text-decoration: none; }
         .btn-detail:hover { background: #e9d5ff; }
 
+        /* Filter collapse (mobile only) */
+        .filter-toggle-checkbox { display: none; }
+        .filter-toggle-label { display: none; }
+
         @media (max-width: 640px) {
             main { padding: 1rem; }
             h1 { font-size: 1.375rem; }
             .fg { min-width: 100%; max-width: none !important; }
             .btn-filter, .btn-reset { width: 100%; justify-content: center; }
+
+            .filter-toggle-label { display: flex; align-items: center; justify-content: space-between; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 0.875rem 1.25rem; margin-bottom: 0.75rem; font-weight: 600; font-size: 0.875rem; color: #334155; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+            .filter-toggle-label .chev { transition: transform 0.2s; }
+            .filter-toggle-checkbox:checked ~ .filter-toggle-label .chev { transform: rotate(180deg); }
+            .filter-card { display: none; }
+            .filter-toggle-checkbox:checked ~ .filter-card { display: block; }
         }
     </style>
 </head>
@@ -160,6 +170,8 @@ export class AccessLogController {
     <main>
         <h1>Access Log</h1>
 
+        <input type="checkbox" id="filterToggle" class="filter-toggle-checkbox" />
+        <label for="filterToggle" class="filter-toggle-label">Filter <span class="chev">&#9662;</span></label>
         <div class="filter-card">
             <form class="filter-row" method="GET" action="/access-log">
                 <div class="fg">
