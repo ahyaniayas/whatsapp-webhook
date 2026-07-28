@@ -129,6 +129,15 @@ export class MfaService {
         return { status: 'pending' };
     }
 
+    /**
+     * Dipakai sekali saja: begitu tab tunggu berhasil menukar sesi CONFIRMED jadi cookie login,
+     * sesi pending-nya dibuang supaya sessionId yang sama tidak bisa ditukar ulang.
+     */
+    consumeSession(sessionId: string | undefined): void {
+        if (!sessionId) return;
+        this.sessions.delete(sessionId);
+    }
+
     confirmByToken(token: string): PendingMfaSession | null {
         const session = this.findByMagicToken(token);
         if (!session) return null;

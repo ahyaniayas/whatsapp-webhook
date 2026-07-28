@@ -280,7 +280,7 @@ export class AccessLogController {
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f8fafc; color: #1e293b; }
-        main { padding: 2rem; max-width: 1100px; overflow-x: hidden; }
+        main { padding: 2rem; overflow-x: hidden; }
         .page-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 1.5rem; }
         h1 { font-size: 1.5rem; font-weight: 700; color: #0f172a; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; min-width: 0; }
         h1::before { content: ""; display: inline-block; width: 8px; height: 24px; background: #8b5cf6; border-radius: 4px; }

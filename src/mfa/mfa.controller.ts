@@ -10,10 +10,16 @@ export class MfaController {
         private readonly authService: AuthService,
     ) {}
 
+    /**
+     * Sengaja TIDAK menghapus _mfa_pending di sini. Cookie itu milik browser, bukan per-tab:
+     * kalau link WA dibuka di browser yang sama dengan tab tunggu, penghapusan di /mfa/confirm
+     * ikut menghilangkan cookie milik tab tunggu, sehingga polling /mfa/status berikutnya
+     * membaca not_found dan salah menampilkan "Sesi kedaluwarsa" padahal login sudah sukses.
+     * Pembersihan _mfa_pending dilakukan di /mfa/status setelah tab tunggu mengonsumsi konfirmasi.
+     */
     private issueSessionCookie(res: Response, username: string): void {
         const token = this.authService.createToken(username);
         res.cookie('_wa_admin', token, { httpOnly: true, sameSite: 'lax', path: '/' });
-        res.clearCookie('_mfa_pending', { path: '/' });
     }
 
     /**
@@ -109,6 +115,8 @@ export class MfaController {
 
         if (result.status === 'confirmed' && result.username) {
             this.issueSessionCookie(res, result.username);
+            res.clearCookie('_mfa_pending', { path: '/' });
+            this.mfaService.consumeSession(sessionId);
             return res.json({ status: 'confirmed', redirect: '/dashboard' });
         }
 
