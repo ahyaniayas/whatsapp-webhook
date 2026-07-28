@@ -1,0 +1,11 @@
+{
+  "compact": true,
+  "controlFlowFlattening": true,
+  "controlFlowFlatteningThreshold": 0.7,
+  "deadCodeInjection": false,
+  "renameGlobals": false,
+  "stringArray": true,
+  "stringArrayThreshold": 0.8,
+  "transformObjectKeys": true,
+  "unicodeEscapeSequence": false
+}
