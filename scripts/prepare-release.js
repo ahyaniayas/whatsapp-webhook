@@ -20,6 +20,8 @@ function copy(src, dest) {
 // file wajib
 copy('package.json', path.join(release, 'package.json'));
 copy('yarn.lock', path.join(release, 'yarn.lock'));
+copy('.yarnrc.yml', path.join(release, '.yarnrc.yml'));
+copy('.yarn', path.join(release, '.yarn'));
 
 // opsional
 copy('ecosystem.config.js', path.join(release, 'ecosystem.config.js'));

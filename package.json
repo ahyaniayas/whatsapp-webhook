@@ -8,7 +8,8 @@
   "scripts": {
     "build": "nest build",
     "obfuscate": "javascript-obfuscator dist --output dist-release/dist --config obfuscator.config.json",
-    "build:release": "yarn build && yarn obfuscate && node scripts/prepare-release.js",
+    "clean:release": "node scripts/clean-release.js",
+    "build:release": "yarn clean:release && yarn build && yarn obfuscate && node scripts/prepare-release.js",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
